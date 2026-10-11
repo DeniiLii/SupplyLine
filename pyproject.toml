@@ -1,0 +1,29 @@
+[project]
+name = "supplyline"
+version = "0.1.0"
+description = "SupplyLine: кликабельный прототип цифрового реверсивного факторинга на синтетических данных"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.30",
+  "pydantic>=2.8",
+  "sqlalchemy>=2.0",
+  "openpyxl>=3.1",
+]
+
+[dependency-groups]
+dev = ["pytest>=8", "httpx>=0.27", "ruff>=0.6", "playwright>=1.47"]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["E501", "B008"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
