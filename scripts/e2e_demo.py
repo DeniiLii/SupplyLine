@@ -34,9 +34,8 @@ def main() -> None:
 
         page.get_by_role("link", name="Лента счетов").click()
         page.get_by_role("row", name="SL-2026-КРУПНЫЙ").click()
-        page.get_by_role("button", name="Продать счёт").click()
-        expect(page.get_by_text("Концентрация на одного якоря").first).to_be_visible()
-        expect(page.get_by_role("alert").filter(has_text="Покупка заблокирована правилом")).to_be_visible()
+        expect(page.get_by_role("button", name="Продать счёт")).to_be_disabled()
+        expect(page.get_by_role("alert").filter(has_text="Концентрация на одного якоря")).to_be_visible()
         step(2, "Крупный счёт: покупка заблокирована потолком концентрации 25% с объяснением правила")
         page.keyboard.press("Escape")
 
@@ -56,7 +55,7 @@ def main() -> None:
         page.get_by_role("button", name="+1 день").first.click()
         expect(page.get_by_text("Часы переведены вперёд").first).to_be_visible()
         page.get_by_role("tab", name="Профинансированы").click()
-        page.get_by_placeholder("Номер счёта, УПД или поставщик").fill(number)
+        page.get_by_placeholder("Счёт, УПД или поставщик").fill(number)
         page.get_by_role("row", name=f"Счёт {number}").click()
         expect(page.get_by_role("dialog").get_by_text("Профинансирован").first).to_be_visible()
         page.get_by_role("button", name="Смоделировать просрочку якоря").click()
@@ -76,7 +75,7 @@ def main() -> None:
         step(7, "Стресс: дефолт якоря 25% даёт потери 1 033 млн ₽ против капитала 676; безопасная доля 16,4%")
 
         page.get_by_role("link", name="Обзор платформы").click()
-        expect(page.get_by_text("Ворота фазы 0")).to_be_visible()
+        expect(page.get_by_text("Фаза 0: показатели ворот 1")).to_be_visible()
         expect(page.get_by_text("Время от акцепта до денег")).to_be_visible()
         step(8, "Ворота фазы 0: одобрения, просрочка 30+, фрод, время до денег, внешнее фондирование")
 

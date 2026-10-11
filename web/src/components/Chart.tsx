@@ -71,7 +71,7 @@ export function axisCommon(t: ChartTokens) {
   return {
     axisLine: { lineStyle: { color: t.grid } },
     axisTick: { show: false },
-    axisLabel: { color: t.text2, fontSize: 12 },
+    axisLabel: { color: t.text2, fontSize: 12, hideOverlap: true },
     splitLine: { lineStyle: { color: t.grid, width: 1, type: "solid" as const } },
     nameTextStyle: { color: t.text3, fontSize: 12 },
   };

@@ -793,8 +793,8 @@ def warnings(p: FinParams, res: dict) -> list[dict]:
     if y5["eff"] > cap_credit(p) + D("1e-12"):
         out.append(dict(code="price_above_cap", level="warning",
                         text="Цена выше потолка рынка",
-                        detail=f"Эффективная ставка поставщика в Г5 выше потолка "
-                               f"(кредит МСП + премия за скорость)."))
+                        detail="Эффективная ставка поставщика в Г5 выше потолка "
+                               "(кредит МСП + премия за скорость)."))
     if res["kpis"]["cum_np_5y"] < 0:
         out.append(dict(code="cum_np_negative", level="warning",
                         text="Накопленная прибыль за 5 лет отрицательна",

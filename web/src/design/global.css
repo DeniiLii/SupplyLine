@@ -63,6 +63,7 @@
   .btn-danger { background: var(--surface); color: var(--danger); border-color: var(--danger); }
   .btn-danger:hover:not(:disabled) { background: var(--danger-bg); }
   .btn-sm { min-height: 36px; padding: 0 12px; font-size: 14px; }
+  @media (pointer: coarse) { .btn-sm { min-height: 44px; } }
 
   .input {
     min-height: var(--target); width: 100%; padding: 0 12px; border-radius: var(--r-control);

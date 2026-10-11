@@ -6,8 +6,7 @@ import os
 from datetime import date, datetime
 from pathlib import Path
 
-from sqlalchemy import (JSON, Date, DateTime, ForeignKey, Integer, Numeric, String, Text,
-                        create_engine, event)
+from sqlalchemy import JSON, Date, DateTime, ForeignKey, Integer, Numeric, String, Text, create_engine, event
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, sessionmaker
 
 DB_PATH = Path(os.environ.get("SUPPLYLINE_DB", Path(__file__).with_name("supplyline.sqlite3")))

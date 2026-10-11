@@ -1,6 +1,7 @@
 """WCAG 2.1 и APCA (W3 0.0.98G) для пар токенов."""
 import sys
 
+
 def lin(c):
     c /= 255
     return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4

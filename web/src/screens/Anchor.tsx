@@ -26,7 +26,7 @@ export default function Anchor() {
   const d = q.data;
   return (
     <>
-      <PageHead title={d ? d.anchor.name : "Якорь"} lead="Реестр акцептов, платежи на 90 дней, поставщики и доля якоря в портфеле против лимита."
+      <PageHead title={d ? d.anchor.name : "Якорь"} lead="Экран только для просмотра: акцепт якорь даёт в своём ЭДО (в прототипе — имитация). Здесь реестр акцептов, платежи на 90 дней, поставщики и доля в портфеле против лимита."
         right={list.data && (
           <label className="flex flex-col gap-1 text-small text-ink2">Якорь (вымышленный)
             <select className="input w-64" value={aid} onChange={(e) => setAid(Number(e.target.value))}>
@@ -46,7 +46,7 @@ export default function Anchor() {
             </div>
           </Card>
           <div className="grid gap-6 xl:grid-cols-2">
-            <Card title="Почему такой рейтинг">
+            <Card title="Почему такой рейтинг" lead="Баллы суммируются до 100: A — от 80, B — от 55, C — от 35, D — ниже.">
               <ul className="flex flex-col gap-2 text-small">
                 {d.scoring.rules.map((r) => <li key={r.rule} className="flex justify-between gap-3"><span className={r.points ? "" : "text-ink3"}>{r.rule}</span><span className="num shrink-0 font-semibold">+{r.points}</span></li>)}
               </ul>

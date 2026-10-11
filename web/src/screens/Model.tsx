@@ -94,14 +94,14 @@ function Body({ d }: { d: Run }) {
     <div className="flex flex-col gap-6">
       <Card>
         <div className="grid grid-cols-2 gap-x-6 gap-y-6 lg:grid-cols-4">
-          <Metric big label="Прибыль до налога Г5" value={num(y5.pbt, 1)} unit="млн ₽" tone={y5.pbt < 0 ? "negative" : "default"}
+          <Metric big label="Прибыль до налога, 5-й год" value={num(y5.pbt, 1)} unit="млн ₽" tone={y5.pbt < 0 ? "negative" : "default"}
             how="Σ по месяцам Г5: доход − фондирование нетто − потери − страхование − комиссия ЦФА − переменные и постоянные расходы" />
           <Metric big label="Накопленная чистая прибыль за 5 лет" value={num(k.cum_np_5y, 1)} unit="млн ₽" tone={k.cum_np_5y < 0 ? "negative" : "default"}
             note={`Дно ${mlnM(k.cum_np_bottom)} в месяце ${k.cum_np_bottom_month}; окупаемость в горизонте: ${k.payback_month ? `месяц ${k.payback_month}` : "нет"}`}
             how="Σ ЧП за 60 месяцев; налог по накопленной прибыли, убыток переносится полностью" />
           <Metric big label="Нужен собственный капитал" value={num(k.eq_need_peak, 0)} unit="млн ₽"
             note={`Пик в месяце ${k.eq_need_peak_month}`} how="max по месяцам (капитал под риск − накопленная ЧП); капитал = 10% × доля риска организатора × средний остаток" />
-          <Metric big label="Оборот безубыточности Г5" value={k.breakeven_turnover_y5 === null ? "н/д" : num(k.breakeven_turnover_y5, 0)} unit={k.breakeven_turnover_y5 === null ? undefined : "млн ₽ в год"}
+          <Metric big label="Оборот безубыточности, 5-й год" value={k.breakeven_turnover_y5 === null ? "н/д" : num(k.breakeven_turnover_y5, 0)} unit={k.breakeven_turnover_y5 === null ? undefined : "млн ₽ в год"}
             note={k.breakeven_share_y5 === null ? "Безубыточность недостижима: вклад на ₽1 оборота ≤ 0" : `${pct(k.breakeven_share_y5, 0)} оборота Г5`}
             how="Постоянные расходы Г5 / вклад на ₽1 оборота при стационарном остатке (оборот × t/365)" />
         </div>
@@ -120,7 +120,7 @@ function Body({ d }: { d: Run }) {
         <PriceTable d={d} />
       </Card>
 
-      <Card title={ru.model.pnl} lead="₽ млн. Потоки — сумма по месяцам; средний остаток и капитал — среднее за год.">
+      <Card title={ru.model.pnl} lead="₽ млн; Г1…Г5 — годы модели. Потоки — сумма по месяцам; средний остаток и капитал — среднее за год.">
         <PnL years={d.years} />
       </Card>
 
@@ -129,7 +129,7 @@ function Body({ d }: { d: Run }) {
         <Card title={ru.model.capTitle} lead="Капитал под риск минус накопленная ЧП. Отдельный график, а не вторая ось."><CumChart months={d.months} field="eq_need" /></Card>
       </div>
 
-      <Card title={ru.model.matrix} lead="Годовой расчёт на общей траектории оборота. Налог в этих вариантах равен 0, поэтому ЧП = ПДН.">
+      <Card title={ru.model.matrix} lead="ПДН — прибыль до налога, ЧП — чистая прибыль, ₽ млн. Налог в этих вариантах равен 0, поэтому ЧП = ПДН.">
         <MatrixTable m={d.matrix} cap={d.cap_credit} sel={`${d.scenario}${d.mode}`} />
       </Card>
 
@@ -301,15 +301,15 @@ function Tornado({ s }: { s: Sens }) {
     yAxis: { type: "category", data: rows.map((r) => r.name), ...axisCommon(t), splitLine: { show: false }, axisLabel: { color: t.text2, width: 260, overflow: "truncate", margin: 44 } },
     series: [
       { name: "Низкий кейс", type: "bar", stack: "t", barWidth: 16, data: rows.map((r) => ({ value: r.delta_low, itemStyle: { color: r.delta_low >= 0 ? t.pos : t.neg, borderRadius: r.delta_low >= 0 ? [0, 4, 4, 0] : [4, 0, 0, 4] },
-          label: { show: Math.abs(r.delta_low) >= 0.05, position: r.delta_low >= 0 ? "right" : "left", color: t.text2, fontSize: 11, formatter: num(r.delta_low, 0) } })) },
+          label: { show: Math.abs(r.delta_low) >= 0.05, position: r.delta_low >= 0 ? "right" : "left", color: t.text2, fontSize: 11, formatter: (r.delta_low > 0 ? "+" : "") + num(r.delta_low, 0) } })) },
       { name: "Высокий кейс", type: "bar", stack: "t2", barGap: "-100%", barWidth: 16, data: rows.map((r) => ({ value: r.delta_high, itemStyle: { color: r.delta_high >= 0 ? t.pos : t.neg, borderRadius: r.delta_high >= 0 ? [0, 4, 4, 0] : [4, 0, 0, 4] },
-          label: { show: Math.abs(r.delta_high) >= 0.05, position: r.delta_high >= 0 ? "right" : "left", color: t.text2, fontSize: 11, formatter: num(r.delta_high, 0) } })) },
+          label: { show: Math.abs(r.delta_high) >= 0.05, position: r.delta_high >= 0 ? "right" : "left", color: t.text2, fontSize: 11, formatter: (r.delta_high > 0 ? "+" : "") + num(r.delta_high, 0) } })) },
     ],
   }), [rows]);
   const top = [...s.rows].sort((a, b) => b.range - a.range);
   return <>
     <Chart option={option} height={420} label={`Сильнее всего ПДН Г5 двигают: ${top.slice(0, 3).map((r) => `${r.name.toLowerCase()} (±${num(r.range / 2, 0)})`).join(", ")}`} />
-    <p className="mt-2 text-caption text-ink3">Зелёный — прибыль растёт, красный — падает. Каждая полоса подписана числом.</p>
+    <p className="mt-2 text-caption text-ink3">Вправо и «+» — прибыль растёт, влево и «−» — падает; цвет дублирует знак.</p>
     <DataTableToggle caption="Чувствительность ПДН Г5" head={["Драйвер", "Низкий", "Высокий", "Δ низкий", "Δ высокий"]}
       rows={top.map((r) => [r.name, num(r.low, 2), num(r.high, 2), num(r.delta_low, 1), num(r.delta_high, 1)])} />
   </>;

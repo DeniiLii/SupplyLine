@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, Request
@@ -17,7 +18,19 @@ from api import services as sv
 from api.routers import demo, finmodel, pricing
 from db.models import SessionLocal, engine, init_db
 
-app = FastAPI(title="SupplyLine API", version="0.1.0",
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    init_db()
+    with SessionLocal() as s:
+        if not inspect(engine).has_table("settings") or sv.get_setting(s, "now") is None:
+            from db.seed import seed
+
+            seed()
+    yield
+
+
+app = FastAPI(title="SupplyLine API", version="0.1.0", lifespan=lifespan,
               description=content.DISCLAIMER + " Все расчёты выполняет engine/*.")
 app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
                    allow_methods=["*"], allow_headers=["*"])
@@ -49,15 +62,6 @@ def _ru(e: dict) -> str:
         return str(ctx.get("error", e.get("msg")))
     return e.get("msg", "Недопустимое значение")
 
-
-@app.on_event("startup")
-def _startup() -> None:
-    init_db()
-    with SessionLocal() as s:
-        if not inspect(engine).has_table("settings") or sv.get_setting(s, "now") is None:
-            from db.seed import seed
-
-            seed()
 
 
 @app.get("/api/health")

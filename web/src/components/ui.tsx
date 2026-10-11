@@ -83,7 +83,7 @@ export function Term({ t, children }: { t: keyof typeof glossary | string; child
 export function HowCalculated({ children }: { children: ReactNode }) {
   return (
     <Tip text={children}>
-      <button type="button" className="inline-flex items-center gap-1 text-caption text-ink3 hover:text-link" aria-label={ru.howCalculated}>
+      <button type="button" className="-my-[13px] inline-flex min-h-[44px] items-center gap-1 self-start text-caption text-ink3 hover:text-link" aria-label={ru.howCalculated}>
         <Info size={14} aria-hidden /> {ru.howCalculated}
       </button>
     </Tip>
@@ -303,7 +303,6 @@ export function Segmented<T extends string>({
           className={`rounded-[9px] px-3 font-medium text-ink2 transition-colors hover:text-ink data-[state=on]:bg-surface data-[state=on]:text-primary ${
             size === "sm" ? "min-h-[32px] text-caption" : "min-h-[36px] text-small"
           }`}
-          style={{ boxShadow: "none" }}
         >
           <span className="inline-flex items-center gap-1">
             {value === o.value && <Check size={14} aria-hidden />}
@@ -588,6 +587,10 @@ export function Dialog({
       <RDialog.Portal>
         <RDialog.Overlay className="fixed inset-0 z-40" style={{ background: "rgba(11,18,34,.45)" }} />
         <RDialog.Content
+          onKeyDown={(e) => {
+            // Подсказка Radix внутри диалога может оставить свой слой и перехватывать Esc
+            if (e.key === "Escape" && !document.querySelector("[role=tooltip]")) onOpenChange(false);
+          }}
           className={`fixed inset-x-0 bottom-0 z-50 max-h-[92vh] overflow-y-auto rounded-t-card border border-line bg-surface p-5 md:inset-auto md:left-1/2 md:top-[5vh] md:-translate-x-1/2 md:rounded-card md:p-6 ${
             wide ? "md:w-[min(1080px,94vw)]" : "md:w-[min(560px,94vw)]"
           }`}

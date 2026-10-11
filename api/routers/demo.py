@@ -149,8 +149,11 @@ def overview(db: Session = Depends(get_db)):
 
 @router.get("/suppliers")
 def suppliers(db: Session = Depends(get_db)):
-    return [{"id": s.id, "name": s.name, "city": s.city, "revenue_mln": s.revenue_mln, "auto_sell": s.auto_sell}
-            for s in sv.suppliers_list(db)]
+    offers: dict[int, int] = defaultdict(int)
+    for i in db.scalars(sv.visible(db).where(Invoice.status == "OFFERED")).all():
+        offers[i.supplier_id] += 1
+    return [{"id": s.id, "name": s.name, "city": s.city, "revenue_mln": s.revenue_mln, "auto_sell": s.auto_sell,
+             "offers": offers[s.id]} for s in sv.suppliers_list(db)]
 
 
 @router.get("/suppliers/{sid}")

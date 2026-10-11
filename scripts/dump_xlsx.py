@@ -1,4 +1,8 @@
-import sys, openpyxl, pathlib
+import pathlib
+import sys
+
+import openpyxl
+
 src = sys.argv[1]; out = pathlib.Path(sys.argv[2])
 wf = openpyxl.load_workbook(src)
 wv = openpyxl.load_workbook(src, data_only=True)

@@ -613,8 +613,11 @@ def invoice_dict(s: Session, inv: Invoice, full: bool = False) -> dict:
             for e in s.scalars(select(Event).where(Event.invoice_id == inv.id, Event.ts <= now)
                                .order_by(Event.ts)).all()
         ]
+        failed = next((c for c in d["limit_checks"] if not c["ok"]), None)
+        d["blocked_rule"] = None if failed is None or st not in (ST.OFFERED, ST.ACCEPTED) else {
+            "rule": failed["rule"], "used": failed["used"], "limit": failed["limit"]}
         d["actions"] = {
-            "sell": st == ST.OFFERED and not inv.review_flag,
+            "sell": st == ST.OFFERED and not inv.review_flag and failed is None,
             "resell": st in (ST.SOLD, ST.FUNDED, ST.OVERDUE, ST.REPAID),
             "overdue": st in (ST.FUNDED, ST.SOLD),
         }

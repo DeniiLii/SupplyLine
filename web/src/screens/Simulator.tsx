@@ -55,7 +55,7 @@ export default function Simulator() {
         }
       />
       <div className="grid gap-6 lg:grid-cols-12">
-        <Card title={ru.simulator.params} className="lg:col-span-4 lg:self-start">
+        <Card title={ru.simulator.params} className="order-2 lg:order-1 lg:col-span-4 lg:self-start">
           <div className="flex flex-col gap-5">
             <SliderField label={<Term t="KС">Ключевая ставка</Term>} badge={<Badge kind="Факт" source="Банк России: 14,00% с 27.07.2026, сохранена 11.09.2026" />}
               value={p.key_rate} onChange={(v) => set("key_rate", v)} min={0.05} max={0.25} step={0.0025} scale={100} digits={2} unit="%" />
@@ -99,14 +99,14 @@ export default function Simulator() {
               min={0} max={1} step={0.05} scale={100} digits={0} unit="%" />
             <SliderField label={ru.simulator.cover} badge={<Badge kind="Гипотеза" source="0–80%; в сделке Т-Банка дебиторка застрахована" />}
               value={p.cover} onChange={(v) => set("cover", v)} min={0} max={0.8} step={0.05} scale={100} digits={0} unit="%" />
-            <SliderField label="Операционные издержки r_opex" badge={<Badge kind="Гипотеза" />} value={p.r_opex}
+            <SliderField label="Операционные издержки в цене" badge={<Badge kind="Гипотеза" />} value={p.r_opex}
               onChange={(v) => set("r_opex", v)} min={0} max={0.05} step={0.001} scale={100} digits={1} unit="%" />
-            <SliderField label="Маржа платформы r_margin" badge={<Badge kind="Гипотеза" />} value={p.r_margin}
+            <SliderField label="Маржа платформы в цене" badge={<Badge kind="Гипотеза" />} value={p.r_margin}
               onChange={(v) => set("r_margin", v)} min={0} max={0.06} step={0.001} scale={100} digits={1} unit="%" />
           </div>
         </Card>
 
-        <div className="flex flex-col gap-6 lg:col-span-8">
+        <div className="order-1 flex flex-col gap-6 lg:order-2 lg:col-span-8">
           {q.isError && <ErrorBox text={errorText(q.error)} onRetry={() => q.refetch()} />}
           {!q.data ? (
             <Card><Loading rows={5} /></Card>

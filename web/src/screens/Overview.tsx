@@ -64,7 +64,7 @@ export default function Overview() {
             </div>
           </Card>
 
-          <Card title={ru.overview.gatesTitle} lead="Ворота 1: перейти к ЦФА можно, когда эти показатели в норме. Значения считаются по демо-портфелю.">
+          <Card title={ru.overview.gatesTitle} lead="Перейти к фазе 1 (ЦФА и внешние инвесторы) можно, когда эти показатели в норме. Считаются по демо-портфелю.">
             <ul className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
               {d.gates.map((g) => (
                 <li key={g.key} className="panel flex flex-col gap-2">
@@ -124,7 +124,7 @@ function AnchorChart({ d }: { d: Ov }) {
     series: [{
       type: "bar", barWidth: 20, data: rows.map((r) => ({ value: r.share, itemStyle: { color: r.share > cap ? t.neg : t.accent, borderRadius: [0, 4, 4, 0] } })),
       label: { show: true, position: "right", color: t.text, fontSize: 12, formatter: (p: { value: number }) => pct(p.value, 1) },
-      markLine: { symbol: "none", silent: true, lineStyle: { color: t.ref, type: "solid" }, label: { color: t.text2, formatter: "потолок 25%", position: "end", distance: 4 }, data: [{ xAxis: cap }] },
+      markLine: { symbol: "none", silent: true, lineStyle: { color: t.ref, type: "solid" }, label: { color: t.text2, formatter: "потолок 25%", position: "start", distance: 4 }, data: [{ xAxis: cap }] },
     }],
   }), [rows, cap]);
   return <>
@@ -143,10 +143,10 @@ function SourceChart({ d }: { d: Ov }) {
     xAxis: { type: "value", max: 1, show: false },
     yAxis: { type: "category", data: ["Портфель"], show: false },
     series: rows.map((r) => ({
-      name: `${r.name}${r.on_balance ? " (баланс)" : ""}`, type: "bar", stack: "s", barWidth: 28,
+      name: `${r.name}${r.on_balance ? " (баланс)" : ""} — ${pct(r.amount / total, 0)}`, type: "bar", stack: "s", barWidth: 28,
       itemStyle: { color: t.cat[SRC_ORDER.indexOf(r.source)], borderColor: t.surface, borderWidth: 2 },
       data: [r.amount / total],
-      label: { show: r.amount / total > 0.12, color: SRC_ORDER.indexOf(r.source) === 1 ? "#141B2D" : "#fff", fontSize: 12, formatter: (p: { value: number }) => pct(p.value, 0) },
+      label: { show: false },
     })),
   }), [rows, total]);
   return <>

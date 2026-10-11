@@ -26,6 +26,7 @@ type Full = InvoiceRow & {
   claim_key: string;
   events: { ts: string; kind: string; level: string; message: string }[];
   actions: { sell: boolean; resell: boolean; overdue: boolean };
+  blocked_rule: { rule: string; used: number; limit: number } | null;
 };
 type List = { total: number; items: InvoiceRow[]; status_counts: Record<string, number>; labels: Record<string, string> };
 
@@ -76,6 +77,8 @@ export default function Feed() {
         {list.isError && <ErrorBox text={errorText(list.error)} onRetry={() => list.refetch()} />}
         {!list.data ? <Loading rows={8} /> : list.data.items.length === 0 ? <EmptyState title={ru.feed.empty} /> : (
           <>
+            <p className="mb-2 hidden text-caption text-ink3 md:block">Проверки по порядку: УПД в ЭДО, акцепт якоря, требование в реестре, лимиты. Галочка — пройдено, пунктирный круг — ещё не проверялось, красный щит — не пройдено.</p>
+            <p className="mb-2 hidden text-caption text-ink3 md:block">Проверки по порядку: УПД в ЭДО, акцепт якоря, требование в реестре, лимиты. Галочка — пройдено, пунктирный круг — ещё не проверялось, красный щит — не пройдено.</p>
             <InvoiceTable items={list.data.items} onOpen={(i) => nav(`/feed/${i}`)} />
             <div className="mt-4 flex items-center justify-between gap-3 text-small text-ink2">
               <span className="num">{page * 40 + 1}–{Math.min((page + 1) * 40, list.data.total)} из {list.data.total}</span>
@@ -92,7 +95,7 @@ export default function Feed() {
   );
 }
 
-export function InvoiceTable({ items, onOpen, compact = false }: { items: InvoiceRow[]; onOpen: (id: number) => void; compact?: boolean }) {
+export function InvoiceTable({ items, onOpen, compact = false, hideSupplier = false }: { items: InvoiceRow[]; onOpen: (id: number) => void; compact?: boolean; hideSupplier?: boolean }) {
   return (
     <>
       <div className="hidden overflow-x-auto md:block" tabIndex={0}>
@@ -101,8 +104,8 @@ export function InvoiceTable({ items, onOpen, compact = false }: { items: Invoic
           <thead>
             <tr>
               <th scope="col">{ru.feed.columns.number}</th>
-              <th scope="col">{ru.feed.columns.supplier}</th>
-              {!compact && <th scope="col">{ru.feed.columns.anchor}</th>}
+              {!hideSupplier && <th scope="col">{ru.feed.columns.supplier}</th>}
+              {(!compact || hideSupplier) && <th scope="col">{ru.feed.columns.anchor}</th>}
               <th scope="col" className="r">{ru.feed.columns.amount}</th>
               <th scope="col" className="r">{ru.feed.columns.term}</th>
               <th scope="col">{ru.feed.columns.checks}</th>
@@ -118,8 +121,8 @@ export function InvoiceTable({ items, onOpen, compact = false }: { items: Invoic
                   <div className="font-medium">{i.number}</div>
                   <div className="text-caption text-ink3">УПД {i.upd_no} от {date(i.upd_date)}</div>
                 </td>
-                <td className="max-w-[220px] truncate">{i.supplier}</td>
-                {!compact && <td><span className="whitespace-nowrap">{i.anchor}</span> <span className="text-caption text-ink3">· {i.anchor_rating}</span></td>}
+                {!hideSupplier && <td className="max-w-[220px] truncate">{i.supplier}</td>}
+                {(!compact || hideSupplier) && <td><span className="whitespace-nowrap">{i.anchor}</span> <span className="text-caption text-ink3">· {i.anchor_rating}</span></td>}
                 <td className="r num font-medium">{rub(i.amount)}</td>
                 <td className="r num">{days(i.term_days)}</td>
                 <td><Checks i={i} /></td>
@@ -224,16 +227,33 @@ export function InvoiceDialog({ id, onClose }: { id: number; onClose: () => void
             {inv.funding_source && <span className="text-caption text-ink2">Фондирование: {SOURCE_NAMES[inv.funding_source] ?? inv.funding_source}</span>}
           </div>
           <div className="hidden md:block"><Rail label={ru.feed.path} steps={railFor(inv)} /></div>
-          <div className="md:hidden"><Rail label={ru.feed.path} steps={railFor(inv)} vertical /></div>
+          <div className="text-small md:hidden"><MobileStage steps={railFor(inv)} /></div>
+          {inv.blocked_rule && (
+            <Callout tone="danger" title={`Продажа невозможна: правило «${inv.blocked_rule.rule}»`}>
+              С учётом счёта {rub(inv.blocked_rule.used)} при лимите {rub(inv.blocked_rule.limit)}. Уменьшите сумму или дождитесь погашения других счетов якоря.
+            </Callout>
+          )}
           {inv.review_flag && <Callout tone="warning" title="Счёт на ручной проверке">{inv.review_reason}</Callout>}
-          {inv.status_reason && <Callout tone={inv.status_reason.includes("правило") ? "warning" : "danger"} title="Почему счёт не продан">{inv.status_reason}</Callout>}
+          {inv.status_reason && !inv.blocked_rule && <Callout tone={inv.status_reason.includes("правило") ? "warning" : "danger"} title="Почему счёт не продан">{inv.status_reason}</Callout>}
           {blocked && <Callout tone="danger" title="Действие заблокировано">{blocked}</Callout>}
+
+          <div className="flex flex-wrap gap-2">
+            <button className="btn btn-primary" disabled={!inv.actions.sell || act.isPending} onClick={() => act.mutate("sell")}>
+              {act.isPending && act.variables === "sell" && <Spinner />}{ru.feed.sell}
+            </button>
+            <Tip text={ru.feed.resellHint}>
+              <button className="btn btn-secondary" disabled={!inv.actions.resell || act.isPending} onClick={() => act.mutate("resell")}>
+                <ShieldAlert size={16} aria-hidden />{ru.feed.resell}
+              </button>
+            </Tip>
+            <button className="btn btn-ghost" disabled={!inv.actions.overdue || act.isPending} onClick={() => act.mutate("overdue")} title="Сценарий для демонстрации: якорь не платит в срок">{ru.feed.overdue}</button>
+          </div>
 
           <div className="grid gap-6 lg:grid-cols-2">
             <section aria-labelledby="offer-h" className="panel">
               <h3 id="offer-h" className="mb-3 text-small font-semibold">{ru.feed.offer}{inv.status !== "OFFERED" && inv.status !== "ACCEPTED" ? " (зафиксировано при продаже)" : ""}</h3>
               <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-small">
-                <dt className="text-ink2">Ставка дисконта</dt><dd className="num text-right font-medium">{pct(inv.price.r_total)}</dd>
+                <dt className="text-ink2">Ставка дисконта (на номинал)</dt><dd className="num text-right font-medium">{pct(inv.price.r_total)}</dd>
                 <dt className="text-ink2"><Term t="эффективная ставка">Эффективная ставка</Term></dt><dd className="num text-right font-medium">{pct(inv.price.eff_rate)}</dd>
                 <dt className="text-ink2"><Term t="дисконт">Дисконт</Term></dt><dd className="num text-right">{rub(inv.price.discount, 2)}</dd>
                 <dt className="text-ink2">Поставщик получит</dt><dd className="num text-right text-[18px] font-semibold text-primary">{rub(inv.price.payout, 2)}</dd>
@@ -253,7 +273,7 @@ export function InvoiceDialog({ id, onClose }: { id: number; onClose: () => void
                   <li key={r.rule} className="flex justify-between gap-3"><span className={r.points ? "" : "text-ink3"}>{r.rule}</span><span className="num shrink-0 font-medium">+{r.points}</span></li>
                 ))}
               </ul>
-              <div className="text-caption text-ink2">Фондирование: сценарий {inv.why.funding_scenario} «{inv.why.funding_scenario_name}», KС {pct(inv.why.key_rate)} → r_fund {pct(inv.why.r_fund)}</div>
+              <div className="text-caption text-ink2">Фондирование: сценарий {inv.why.funding_scenario} «{inv.why.funding_scenario_name}», KС {pct(inv.why.key_rate)} → стоимость фондирования {pct(inv.why.r_fund)}</div>
             </section>
           </div>
 
@@ -276,18 +296,6 @@ export function InvoiceDialog({ id, onClose }: { id: number; onClose: () => void
             </div>
           </section>
 
-          <div className="flex flex-wrap gap-2">
-            <button className="btn btn-primary" disabled={!inv.actions.sell || act.isPending} onClick={() => act.mutate("sell")}>
-              {act.isPending && act.variables === "sell" && <Spinner />}{ru.feed.sell}
-            </button>
-            <Tip text={ru.feed.resellHint}>
-              <button className="btn btn-secondary" disabled={!inv.actions.resell || act.isPending} onClick={() => act.mutate("resell")}>
-                <ShieldAlert size={16} aria-hidden />{ru.feed.resell}
-              </button>
-            </Tip>
-            <button className="btn btn-danger" disabled={!inv.actions.overdue || act.isPending} onClick={() => act.mutate("overdue")}>{ru.feed.overdue}</button>
-          </div>
-
           <section aria-labelledby="key-h" className="text-caption">
             <h3 id="key-h" className="mb-1 font-semibold">{ru.feed.claimKey}</h3>
             <code className="block break-all rounded-panel bg-sunken p-2 font-mono text-ink2">{inv.claim_key}</code>
@@ -305,6 +313,18 @@ export function InvoiceDialog({ id, onClose }: { id: number; onClose: () => void
         </div>
       )}
     </Dialog>
+  );
+}
+
+function MobileStage({ steps }: { steps: RailStep[] }) {
+  let k = steps.findIndex((x) => x.state === "current" || x.state === "error");
+  if (k < 0) k = steps.length - 1;
+  const s = steps[k];
+  return (
+    <span>
+      Этап {k + 1} из {steps.length}: <b className={s.state === "error" ? "text-danger" : ""}>{s.label}</b>
+      {s.meta ? <span className="text-ink3"> · {s.meta}</span> : null}
+    </span>
   );
 }
 

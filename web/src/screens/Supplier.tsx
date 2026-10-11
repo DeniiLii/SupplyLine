@@ -3,7 +3,7 @@ import { useState } from "react";
 import { api, errorText } from "../api/client";
 import { days, mln, num, pct, rub } from "../api/format";
 import { PageHead } from "../components/Layout";
-import { Badge, Card, EmptyState, ErrorBox, Loading, Metric, Rail } from "../components/ui";
+import { Badge, Card, EmptyState, ErrorBox, Loading, Metric } from "../components/ui";
 import { ru } from "../copy/ru";
 import { InvoiceDialog, InvoiceTable, type InvoiceRow } from "./Feed";
 
@@ -16,10 +16,10 @@ type S = {
 };
 
 export default function Supplier() {
-  const list = useQuery({ queryKey: ["suppliers"], queryFn: () => api<{ id: number; name: string }[]>("/api/suppliers") });
+  const list = useQuery({ queryKey: ["suppliers"], queryFn: () => api<{ id: number; name: string; offers: number }[]>("/api/suppliers") });
   const [sid, setSid] = useState(() => { try { return Number(localStorage.getItem("sl-supplier")) || 0; } catch { return 0; } });
   const current = sid || 0;
-  const q = useQuery({ queryKey: ["supplier", current], queryFn: () => api<S>(`/api/suppliers/${current || list.data![0].id}`), enabled: !!list.data });
+  const q = useQuery({ queryKey: ["supplier", current], queryFn: () => api<S>(`/api/suppliers/${current || [...list.data!].sort((a, b) => b.offers - a.offers)[0].id}`), enabled: !!list.data });
   const [open, setOpen] = useState<number | null>(null);
   const d = q.data;
   return (
@@ -28,7 +28,7 @@ export default function Supplier() {
         right={list.data && (
           <label className="flex flex-col gap-1 text-small text-ink2">Поставщик (вымышленный)
             <select className="input w-72" value={d?.supplier.id ?? ""} onChange={(e) => { setSid(Number(e.target.value)); try { localStorage.setItem("sl-supplier", e.target.value); } catch { /* */ } }}>
-              {list.data.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+              {list.data.map((s) => <option key={s.id} value={s.id}>{s.name}{s.offers ? ` · предложений: ${s.offers}` : ""}</option>)}
             </select>
           </label>
         )} />
@@ -70,35 +70,42 @@ export default function Supplier() {
                   <div className="text-small text-ink2">{d.compare.credit_time}.</div>
                 </div>
               </div>
-              <p className="mt-4 text-small">
-                {d.compare.difference > 0 ? <>Продажа дороже кредита на <b className="num">{rub(d.compare.difference)}</b>.</> : <>Продажа дешевле кредита на <b className="num">{rub(-d.compare.difference)}</b>.</>} {d.compare.note}
+              <p className="mt-4 text-h2">
+                {d.compare.difference > 0 ? <>Продажа дороже кредита на <span className="num">{rub(d.compare.difference)}</span></> : <>Продажа дешевле кредита на <span className="num">{rub(-d.compare.difference)}</span></>}
               </p>
+              <p className="mt-1 text-small text-ink2">{d.compare.note}</p>
             </Card>
           )}
 
           <Card title="Открытые предложения">
-            {d.offers.length === 0 ? <EmptyState title={ru.empty.offers} /> : <InvoiceTable items={d.offers} onOpen={setOpen} compact />}
+            {d.offers.length === 0 ? <EmptyState title={ru.empty.offers} /> : <InvoiceTable items={d.offers} onOpen={setOpen} compact hideSupplier />}
           </Card>
 
           <Card title="От акцепта до денег" lead="Последние профинансированные счета: сколько часов прошло от акцепта якоря до зачисления.">
-            {d.timeline.length === 0 ? <EmptyState title="Профинансированных счетов пока нет." /> : (
+            {d.timeline.length === 0 ? <EmptyState title="Профинансированных счетов пока нет." /> : (<>
               <ul className="flex flex-col gap-3">
-                {d.timeline.slice(0, 6).map((t) => (
-                  <li key={t.number} className="grid items-center gap-2 md:grid-cols-[160px_1fr_80px]">
-                    <span className="text-small font-medium">{t.number}</span>
-                    <Rail label={`Счёт ${t.number}`} steps={[
-                      { key: "a", state: "done", label: "Акцепт" },
-                      { key: "f", state: "done", label: "Деньги" },
-                    ]} />
-                    <span className={`num text-right text-small font-semibold ${t.hours >= 24 ? "text-danger" : ""}`}>{num(t.hours, 1)} ч</span>
-                  </li>
-                ))}
+                {d.timeline.slice(0, 8).map((t) => {
+                  const max = 30;
+                  return (
+                    <li key={t.number} className="grid items-center gap-x-4 gap-y-1 md:grid-cols-[150px_1fr_72px]">
+                      <span className="text-small font-medium">{t.number}</span>
+                      <div className="relative h-6" aria-hidden>
+                        <div className="absolute top-1/2 h-[2px] -translate-y-1/2 rounded-full" style={{ left: 0, width: `${Math.min(100, (t.hours / max) * 100)}%`, background: t.hours >= 24 ? "var(--danger)" : "var(--primary)" }} />
+                        <span className="absolute top-1/2 block h-3 w-3 -translate-y-1/2 rounded-full border-2" style={{ left: 0, borderColor: "var(--primary)", background: "var(--primary)" }} />
+                        <span className="absolute top-1/2 block h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2" style={{ left: `${Math.min(100, (t.hours / max) * 100)}%`, borderColor: "var(--primary)", background: "var(--surface)" }} />
+                        <span className="absolute top-0 h-full border-l border-dashed" style={{ left: `${(24 / max) * 100}%`, borderColor: "var(--border-strong)" }} />
+                      </div>
+                      <span className={`num text-small font-semibold md:text-right ${t.hours >= 24 ? "text-danger" : ""}`}>{num(t.hours, 1)} ч<span className="sr-only"> от акцепта до денег</span></span>
+                    </li>
+                  );
+                })}
               </ul>
-            )}
+              <p className="mt-3 text-caption text-ink3">Пунктир — 24 часа, цель ворот фазы 0. Время включает решение поставщика продать счёт.</p>
+            </>)}
           </Card>
 
           <Card title="История">
-            {d.history.length === 0 ? <EmptyState title="Счетов пока нет." /> : <InvoiceTable items={d.history} onOpen={setOpen} compact />}
+            {d.history.length === 0 ? <EmptyState title="Счетов пока нет." /> : <InvoiceTable items={d.history} onOpen={setOpen} compact hideSupplier />}
           </Card>
         </div>
       )}

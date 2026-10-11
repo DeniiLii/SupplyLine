@@ -5,7 +5,7 @@ import { ru } from "../copy/ru";
 import { useMeta } from "./Market";
 
 const KIND_TONE: Record<string, "success" | "process" | "warning" | "neutral" | "danger"> = {
-  "Работает": "success", "Мок": "process", "Синтетика": "neutral", "Гипотеза": "warning", "Факт": "success", "Нет": "danger",
+  "Работает": "success", "Имитация": "process", "Синтетика": "neutral", "Гипотеза": "warning", "Факт": "success", "Нет": "danger",
 };
 
 export default function About() {
@@ -33,7 +33,7 @@ export default function About() {
                     <span className="num w-6 text-h2 text-primary">{l.n}</span>
                     <span className="min-w-[200px] font-semibold">{l.name}</span>
                     <span className="grow text-small text-ink2">{l.items.join(", ")}</span>
-                    <Chip tone={l.state === "работает" || l.state === "работает на моках" ? "success" : l.state === "мок" ? "process" : "warning"}>{l.state}</Chip>
+                    <Chip tone={l.state.startsWith("работает") ? "success" : l.state === "имитация" ? "process" : "warning"}>{l.state}</Chip>
                   </li>
                 ))}
               </ol>

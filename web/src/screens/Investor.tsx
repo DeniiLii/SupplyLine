@@ -6,6 +6,9 @@ import { PageHead } from "../components/Layout";
 import { Badge, Callout, Card, EmptyState, ErrorBox, Loading, Metric, SliderField } from "../components/ui";
 import { ru } from "../copy/ru";
 
+const MONTHS = ["январь", "февраль", "март", "апрель", "май", "июнь", "июль", "август", "сентябрь", "октябрь", "ноябрь", "декабрь"];
+const monthName = (m: string) => { const [y, mm] = m.split("-"); return `${MONTHS[Number(mm) - 1]} ${y}`; };
+
 type I = {
   cover: number; tranches: { id: string; month: string; source: string; source_name: string; amount: number; count: number; outstanding: number; repaid: number; overdue: number; wavg_days: number; yield: number; net_yield: number; el: number; top_anchor: string; top_anchor_share: number; issuer: string }[];
   total_issued: number; outstanding: number; expected_loss: number; expected_loss_no_cover: number;
@@ -35,14 +38,14 @@ export default function Investor() {
               <SliderField label="Страховое покрытие" badge={<Badge kind="Гипотеза" source="Тариф 1% годовых от застрахованной суммы" />} value={cover} onChange={setCover} min={0} max={0.8} step={0.05} scale={100} digits={0} unit="%" />
             </div>
           </Card>
-          <Card title="Транши" lead="Группировка по месяцу выпуска и источнику. Срок — средневзвешенный по номиналу.">
+          <Card title="Транши" lead="Эмитент всех траншей — модельный SPV. Группировка по месяцу выпуска и источнику; срок — средневзвешенный по номиналу.">
             {d.tranches.length === 0 ? <EmptyState title={ru.empty.tranches} /> : (
               <div className="overflow-x-auto" tabIndex={0}>
                 <table className="data-table dense">
                   <thead><tr><th scope="col">Транш</th><th scope="col">Источник</th><th scope="col" className="r">Номинал</th><th scope="col" className="r">В обращении</th><th scope="col" className="r">Погашено</th><th scope="col" className="r">Просрочено</th><th scope="col" className="r">Срок, дн.</th><th scope="col" className="r">Доходность нетто</th><th scope="col">Крупнейший якорь</th></tr></thead>
                   <tbody>{d.tranches.map((t) => (
                     <tr key={t.id}>
-                      <td className="font-medium">{t.month}<div className="text-caption font-normal text-ink3">{t.issuer}</div></td>
+                      <td className="font-medium whitespace-nowrap">{monthName(t.month)}</td>
                       <td>{t.source_name}</td>
                       <td className="r num">{mln(t.amount)}</td><td className="r num">{mln(t.outstanding)}</td><td className="r num">{mln(t.repaid)}</td>
                       <td className={`r num ${t.overdue ? "text-danger" : ""}`}>{mln(t.overdue)}</td>
@@ -61,12 +64,13 @@ export default function Investor() {
                   <span className="text-small font-medium">{c.anchor}</span>
                   <div className="h-2 rounded-full" style={{ background: "var(--primary-soft-2)" }} role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(c.share * 100)} aria-label={`${c.anchor}: ${pct(c.share, 0)}`}>
                     <div className="h-2 rounded-full" style={{ width: `${c.share * 100}%`, background: c.share > 0.25 ? "var(--danger)" : "var(--primary)" }} />
+                    <div className="relative -mt-3 h-4 border-l-2" style={{ marginLeft: "25%", borderColor: "var(--text-2)" }} title="потолок 25%" />
                   </div>
                   <span className="num text-right text-small">{pct(c.share, 1)} · {mln(c.amount, 0)}</span>
                 </li>
               ))}
             </ul>
-            <p className="mt-3 text-caption text-ink3">Красная полоса — доля выше 25%. Внутри траншей концентрация может быть выше, чем в портфеле платформы.</p>
+            <p className="mt-3 text-caption text-ink3">Вертикальная черта — потолок 25%; красная полоса правее неё — доля выше потолка. Внутри траншей концентрация может быть выше, чем в портфеле платформы.</p>
           </Card>
         </div>
       )}

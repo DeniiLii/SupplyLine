@@ -6,7 +6,8 @@ const nf = (min: number, max: number) =>
 
 export function num(x: number | null | undefined, digits = 0): string {
   if (x === null || x === undefined || Number.isNaN(x)) return "—";
-  return nf(digits, digits).format(x).replace(/ /g, NB).replace("-", "−");
+  const v = Math.abs(x) < 0.5 * 10 ** -digits ? 0 : x;
+  return nf(digits, digits).format(v).replace(/ /g, NB).replace("-", "−");
 }
 
 export function rub(x: number | null | undefined, digits = 0): string {
