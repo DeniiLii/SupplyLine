@@ -40,9 +40,26 @@ def run(cmd: list[str], cwd: Path = ROOT) -> None:
     subprocess.run(cmd, cwd=cwd, env=env(), check=True)
 
 
+def has_npm() -> bool:
+    return shutil.which("npm", path=env()["PATH"]) is not None
+
+
+def dist_ready() -> bool:
+    return (WEB / "dist" / "index.html").exists()
+
+
 def install() -> None:
     if not VENV_PY.exists():
-        run(["uv", "sync"])
+        if shutil.which("uv"):
+            run(["uv", "sync"])
+        else:
+            # Без uv: зависимости ставятся в текущий Python через pip
+            run([sys.executable, "-m", "pip", "install", "-r", str(ROOT / "requirements.txt")])
+    if not has_npm():
+        if dist_ready():
+            print("Node не найден: используется уже собранный интерфейс web/dist")
+            return
+        sys.exit("Нужен Node.js 20+ для сборки интерфейса (или архив с готовой папкой web/dist)")
     if not (WEB / "node_modules").exists():
         run(npm("install", "--no-audit", "--no-fund"), WEB)
 
@@ -52,6 +69,8 @@ def seed() -> None:
 
 
 def build() -> None:
+    if not has_npm() and dist_ready():
+        return
     run(npm("run", "build"), WEB)
 
 
