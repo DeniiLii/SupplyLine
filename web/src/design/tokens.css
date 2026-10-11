@@ -1,0 +1,149 @@
+/* Токены SupplyLine. Документация: docs/design/tokens.md. Контраст: scripts/contrast.py */
+
+:root {
+  /* Шкала синего, выведена вокруг ориентира #243776, основной сдвинут в #1F3270 */
+  --blue-50: #eef2fa;
+  --blue-100: #dce4f4;
+  --blue-200: #b9c8e8;
+  --blue-300: #8ea5d6;
+  --blue-400: #5f7dbe;
+  --blue-500: #3d5ca6;
+  --blue-600: #2b468e;
+  --blue-700: #1f3270;
+  --blue-800: #18275a;
+  --blue-900: #111c42;
+
+  /* Нейтральные (холодные) */
+  --gray-0: #ffffff;
+  --gray-50: #f2f4f8;
+  --gray-100: #e9ecf2;
+  --gray-200: #dde2ea;
+  --gray-300: #c4cad6;
+  --gray-400: #8a93a6;
+  --gray-500: #5d6679;
+  --gray-600: #4f586b;
+  --gray-900: #141b2d;
+
+  /* Роли: светлая тема */
+  --bg: var(--gray-50);
+  --surface: var(--gray-0);
+  --surface-sunken: #f7f8fb;
+  --border: var(--gray-200);
+  --border-strong: var(--gray-400);
+  --text: var(--gray-900);
+  --text-2: var(--gray-600);
+  --text-3: var(--gray-500);
+  --primary: var(--blue-700);
+  --primary-hover: var(--blue-800);
+  --primary-press: var(--blue-900);
+  --primary-soft: var(--blue-50);
+  --primary-soft-2: var(--blue-100);
+  --on-primary: #ffffff;
+  --link: #1d63b8;
+  --focus: #1d63b8;
+
+  --success: #17663a;
+  --success-bg: #e6f4ec;
+  --warning: #7a4d00;
+  --warning-bg: #fff4db;
+  --danger: #a8201a;
+  --danger-bg: #fdecea;
+  --neutral: var(--gray-600);
+  --neutral-bg: var(--gray-100);
+
+  --badge-fact: #17663a;
+  --badge-fact-bg: #e6f4ec;
+  --badge-hyp: #7a4d00;
+  --badge-hyp-bg: #fff4db;
+
+  /* Графики (dataviz.md) */
+  --chart-accent: #1f3270;
+  --chart-context: #c4cad6;
+  --chart-1: #3d6bd1;
+  --chart-2: #d4891a;
+  --chart-3: #178f80;
+  --chart-4: #8b67d6;
+  --chart-5: #d0527f;
+  --chart-neg: #c0392b;
+  --chart-pos: #1e8a4c;
+  --chart-ref: #6b7487;
+  --chart-grid: #e9ecf2;
+
+  /* Типографика */
+  --font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  --fs-display: 40px; --lh-display: 48px;
+  --fs-h1: 28px; --lh-h1: 36px;
+  --fs-h2: 20px; --lh-h2: 28px;
+  --fs-body: 16px; --lh-body: 24px;
+  --fs-small: 14px; --lh-small: 20px;
+  --fs-caption: 13px; --lh-caption: 18px;
+  --fw-regular: 400; --fw-medium: 500; --fw-semibold: 600; --fw-bold: 700;
+
+  /* Отступы: шаг 4 */
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 20px; --s-6: 24px; --s-8: 32px; --s-10: 40px;
+  --s-12: 48px; --s-16: 64px;
+
+  /* Радиусы: иерархия вместо теней */
+  --r-card: 20px;
+  --r-panel: 12px;
+  --r-control: 12px;
+  --r-chip: 999px;
+  --border-w: 1px;
+  --focus-ring: 0 0 0 2px var(--surface), 0 0 0 4px var(--focus);
+
+  /* Движение */
+  --dur: 180ms;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  --container: 1280px;
+  --target: 44px;
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --bg: #0b1222;
+  --surface: #121a2e;
+  --surface-sunken: #0f1628;
+  --border: #26314b;
+  --border-strong: #4a5674;
+  --text: #e8ecf5;
+  --text-2: #aeb8cc;
+  --text-3: #95a0b6;
+  --primary: #9db4ea;
+  --primary-hover: #b6c8f0;
+  --primary-press: #cad7f4;
+  --primary-soft: #1a2647;
+  --primary-soft-2: #22305a;
+  --on-primary: #0b1330;
+  --link: #8cb8f2;
+  --focus: #8cb8f2;
+  --success: #7dd3a0;
+  --success-bg: #12301f;
+  --warning: #f2c46b;
+  --warning-bg: #33270c;
+  --danger: #f59a92;
+  --danger-bg: #3a1614;
+  --neutral: #aeb8cc;
+  --neutral-bg: #1c2540;
+  --badge-fact: #7dd3a0;
+  --badge-fact-bg: #12301f;
+  --badge-hyp: #f2c46b;
+  --badge-hyp-bg: #33270c;
+  --chart-accent: #9db4ea;
+  --chart-context: #4a5674;
+  --chart-1: #4a7ee0;
+  --chart-2: #c47f14;
+  --chart-3: #1b9c8b;
+  --chart-4: #946fdd;
+  --chart-5: #d65f8a;
+  --chart-neg: #f07a6e;
+  --chart-pos: #5cc98a;
+  --chart-ref: #95a0b6;
+  --chart-grid: #1f2942;
+  color-scheme: dark;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --dur: 0ms; }
+}

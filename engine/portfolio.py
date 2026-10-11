@@ -60,7 +60,7 @@ def check_limits(
         LimitCheck("Лимит поставщика", by_supplier + new.amount <= supplier_limit_value,
                    by_supplier + new.amount, supplier_limit_value,
                    "Лимит = min(доля × оборот с якорем за 90 дней, суб-лимит якоря)"),
-        LimitCheck("Концентрация на якоря: не больше 25%", (by_anchor + new.amount) <= anchor_cap * base,
+        LimitCheck("Концентрация на одного якоря: не больше 25%", (by_anchor + new.amount) <= anchor_cap * base,
                    by_anchor + new.amount, anchor_cap * base,
                    "Доля якоря в портфеле (база — больше из портфеля и плана программы)"),
         LimitCheck("Концентрация на отрасль: не больше 40%", (by_industry + new.amount) <= industry_cap * base,

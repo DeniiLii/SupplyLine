@@ -81,7 +81,7 @@ def quote(q: QuoteIn):
         "waterfall": [
             {"key": "funding", "label": "Фондирование", "amount": p.comp_funding, "rate": r_fund},
             {"key": "loss", "label": "Ожидаемые потери", "amount": p.comp_loss, "rate": p.r_el},
-            {"key": "opex", "label": "Операционные издержки", "amount": p.comp_opex, "rate": q.r_opex},
+            {"key": "opex", "label": "Издержки", "amount": p.comp_opex, "rate": q.r_opex},
             {"key": "margin", "label": "Маржа платформы", "amount": p.comp_margin, "rate": p.r_margin_effective},
         ],
         "compare": {

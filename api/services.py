@@ -554,10 +554,11 @@ def gates(s: Session, invs: list[Invoice], now: datetime, out_amt: int, overdue3
                or i.review_flag]
     approved = [i for i in decided if i.funded_at or i.status == "SOLD"]
     approval = D(len(approved)) / len(decided) if decided else D(0)
-    hours = [(i.funded_at - i.accepted_at).total_seconds() / 3600 for i in invs if i.funded_at and i.accepted_at]
-    hours.sort()
+    hours = sorted((i.funded_at - i.accepted_at).total_seconds() / 3600 for i in invs if i.funded_at and i.accepted_at)
     median = hours[len(hours) // 2] if hours else 0
-    p90 = hours[int(len(hours) * 0.9)] if hours else 0
+    # Платформа отвечает за время от решения поставщика продать до денег; ожидание решения — время поставщика
+    plat = sorted((i.funded_at - i.t_sold).total_seconds() / 3600 for i in invs if i.funded_at and i.t_sold)
+    p90 = plat[int(len(plat) * 0.9)] if plat else 0
     ov = D(sum(i.amount_kop for i in overdue30)) / out_amt if out_amt else D(0)
     ext = D(off) / out_amt if out_amt else D(0)
     return [
@@ -569,7 +570,7 @@ def gates(s: Session, invs: list[Invoice], now: datetime, out_amt: int, overdue3
          "target": "≈ 0", "ok": True, "gate": 1, "note": f"Заблокировано попыток двойной продажи: {blocked}"},
         {"key": "time_to_money", "label": "Время от акцепта до денег (медиана)", "value": D(str(round(median, 1))),
          "unit": "hours", "target": "< 24 ч", "ok": median < 24, "gate": 1,
-         "note": f"90-й процентиль: {round(p90, 1)} ч".replace(".", ",")},
+         "note": f"От решения продать до денег, 90-й процентиль: {round(p90, 1)} ч. Разница с медианой — время, пока поставщик решает".replace(".", ",", 1)},
         {"key": "external", "label": "Доля внешнего фондирования", "value": ext, "unit": "share",
          "target": "> 30% (ворота 2)", "ok": ext > D("0.30"), "gate": 2},
     ]
