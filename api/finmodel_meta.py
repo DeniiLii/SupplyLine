@@ -75,7 +75,7 @@ PARAMS: list[dict] = [
     dict(key="ga", label="Прочие и общехозяйственные", unit="pct", badge="Гипотеза", source="Допущение автора",
          cell="B71", group="Постоянные расходы"),
     dict(key="stress_share", label="Доля крупнейшего якоря", unit="pct", badge="Гипотеза",
-         source="Потолок концентрации 25%", cell="B77", group="Стресс"),
+         source="Доля якоря в стресс-тесте книги (25%); лимит платформы — настройка anchor_cap, 15%", cell="B77", group="Стресс"),
     dict(key="stress_month", label="Месяц события", unit="month", badge="Гипотеза", source="Середина Г4",
          cell="B78", group="Стресс"),
 ]

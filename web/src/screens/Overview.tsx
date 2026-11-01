@@ -124,11 +124,11 @@ function AnchorChart({ d }: { d: Ov }) {
     series: [{
       type: "bar", barWidth: 20, data: rows.map((r) => ({ value: r.share, itemStyle: { color: r.share > cap ? t.neg : t.accent, borderRadius: [0, 4, 4, 0] } })),
       label: { show: true, position: "right", color: t.text, fontSize: 12, formatter: (p: { value: number }) => pct(p.value, 1) },
-      markLine: { symbol: "none", silent: true, lineStyle: { color: t.ref, type: "solid" }, label: { color: t.text2, formatter: "потолок 25%", position: "start", distance: 4 }, data: [{ xAxis: cap }] },
+      markLine: { symbol: "none", silent: true, lineStyle: { color: t.ref, type: "solid" }, label: { color: t.text2, formatter: `потолок ${pct(cap, 0)}`, position: "start", distance: 4 }, data: [{ xAxis: cap }] },
     }],
   }), [rows, cap]);
   return <>
-    <Chart option={option} height={240} label={`Крупнейший якорь ${rows[0]?.name}: ${pct(rows[0]?.share ?? 0, 1)} при потолке 25%`} />
+    <Chart option={option} height={240} label={`Крупнейший якорь ${rows[0]?.name}: ${pct(rows[0]?.share ?? 0, 1)} при потолке ${pct(cap, 0)}`} />
     <DataTableToggle caption="Портфель по якорям" head={["Якорь", "В работе, ₽ млн", "Доля базы", "Лимит, ₽ млн"]} rows={rows.map((r) => [r.name, num(r.outstanding / 1e6, 1), pct(r.share, 1), num(r.limit / 1e6)])} />
   </>;
 }

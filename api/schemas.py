@@ -110,6 +110,8 @@ class SettingsIn(BaseModel):
     anchor_rejects: bool | None = None
     payment_fails: bool | None = None
     cfa_down: bool | None = None
+    anchor_cap: Decimal | None = Field(None, ge=Decimal("0.05"), le=Decimal("0.25"),
+                                       description="Потолок концентрации на одного якоря")
 
 
 class AdvanceIn(BaseModel):

@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 
 from db.models import Anchor, Invoice, SessionLocal, Setting, Supplier, SupplierAnchor, engine, reset_db
 from engine.clock import DEMO_START
+from engine.portfolio import ANCHOR_CAP
 from engine.scoring import AnchorMetrics, SupplierMetrics, score_anchor, supplier_limit_share
 
 SEED = 42
@@ -187,7 +188,8 @@ def build(session: Session) -> dict:
                                        months_with_anchor=months, returns_share=ret,
                                        limit_share=float(share), limit_kop=limit))
     for k, v in {"now": now.isoformat(), "scenario": "M", "key_rate": "0.14", "seed": str(SEED),
-                 "edo_down": "0", "anchor_rejects": "0", "payment_fails": "0", "cfa_down": "0"}.items():
+                 "edo_down": "0", "anchor_rejects": "0", "payment_fails": "0", "cfa_down": "0",
+                 "anchor_cap": str(ANCHOR_CAP)}.items():
         session.add(Setting(key=k, value=v))
     session.flush()
     return {"anchors": len(anchors), "suppliers": len(suppliers), "invoices": len(invoices)}

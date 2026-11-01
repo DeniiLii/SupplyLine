@@ -7,6 +7,7 @@ import { axisCommon, Chart, type ChartTokens } from "../components/Chart";
 import { PageHead } from "../components/Layout";
 import { Badge, Callout, Card, Chip, DataTableToggle, ErrorBox, Loading, Metric, Segmented, SliderField, Tip, useToast } from "../components/ui";
 import { ru } from "../copy/ru";
+import { LeversCard } from "./Levers";
 
 type Year = { year: number; turnover: number; avg_bal: number; bal_end: number; income: number; fund_net: number; el_borne: number; ins: number; cfa_fee: number; var_opex: number; fix_opex: number; pbt: number; tax: number; np: number; cum_np: number; capital_avg: number; r_app: number; eff: number; w_on: number; borne: number; margin: number; breakeven_turnover: number | null; rorc: number; nim: number; econ: number };
 type Month = { month: number; cum_np: number; eq_need: number; np: number; capital: number };
@@ -28,6 +29,13 @@ export default function Model() {
   const ds = useDebounced(s, 150);
   const q = useQuery({ queryKey: ["finmodel", ds], queryFn: () => api<Run>("/api/finmodel/run", { method: "POST", json: ds }), placeholderData: keepPreviousData });
   const d = q.data;
+  // Лимит концентрации платформы (настройка) и стресс-тест при этой доле якоря
+  const stq = useQuery({ queryKey: ["state"], queryFn: () => api<{ anchor_cap: number }>("/api/state") });
+  const cap = stq.data?.anchor_cap;
+  const pq = useQuery({
+    queryKey: ["finmodel-cap", ds, cap], enabled: cap !== undefined, placeholderData: keepPreviousData,
+    queryFn: () => api<Run>("/api/finmodel/run", { method: "POST", json: { ...ds, stress_share: cap, months: false } }),
+  });
   const isBase = s.scenario === "M" && s.price_mode === 1 && s.ks_scenario === 1 && s.ks_pass_through === 1 && s.t_days === 45;
 
   const downloadCurrent = async () => {
@@ -78,7 +86,7 @@ export default function Model() {
       </Card>
 
       {q.isError && <ErrorBox text={errorText(q.error)} onRetry={() => q.refetch()} />}
-      {!d ? <Card><Loading rows={8} /></Card> : <Body d={d} />}
+      {!d ? <Card><Loading rows={8} /></Card> : <Body d={d} platform={pq.data?.stress} cap={cap} />}
     </>
   );
 }
@@ -87,7 +95,7 @@ function Ctrl({ label, badge, children }: { label: string; badge?: React.ReactNo
   return <div className="flex flex-col gap-2"><div className="flex items-center gap-2 text-small font-medium">{label}{badge}</div>{children}</div>;
 }
 
-function Body({ d }: { d: Run }) {
+function Body({ d, platform, cap }: { d: Run; platform?: Stress; cap?: number }) {
   const y5 = d.years[4];
   const k = d.kpis;
   return (
@@ -116,6 +124,8 @@ function Body({ d }: { d: Run }) {
         </section>
       )}
 
+      <LeversCard />
+
       <Card title="Цена и конкурентоспособность" lead={ru.model.priceSummary}>
         <PriceTable d={d} />
       </Card>
@@ -138,7 +148,7 @@ function Body({ d }: { d: Run }) {
       </Card>
 
       <Card title={ru.model.stress} lead="Валовые потери = доля якоря × остаток × LGD × (1 − покрытие); организатор несёт свою долю риска.">
-        <StressBlock st={d.stress} />
+        <StressBlock st={d.stress} platform={platform} cap={cap} />
       </Card>
 
       <Card title={ru.model.unit} lead="₽ тыс. Переплата — дисконт минус проценты по кредиту МСП на полученную сумму за тот же срок.">
@@ -315,10 +325,23 @@ function Tornado({ s }: { s: Sens }) {
   </>;
 }
 
-function StressBlock({ st }: { st: Stress }) {
+function StressBlock({ st, platform, cap }: { st: Stress; platform?: Stress; cap?: number }) {
   const [view, setView] = useState<"rub" | "cap">("rub");
+  const capSafe = cap !== undefined && cap <= st.max_share && (platform?.covered ?? true);
   return (
     <div className="flex flex-col gap-6">
+      {platform && cap !== undefined && (
+        <section aria-label="Стресс-тест: книга и платформа" className="grid gap-3 md:grid-cols-2">
+          <Callout tone={st.covered ? "success" : "danger"}
+            title={`Книга Excel, доля якоря ${pct(st.share, 0)}: ${st.covered ? "капитал покрывает дефолт" : "капитал не покрывает дефолт"}`}>
+            Потери {mlnM(st.loss)} против капитала {mlnM(st.capital)} (покрытие {num(st.coverage, 2)}×). Безопасная доля {pct(st.max_share, 1)}.
+          </Callout>
+          <Callout tone={capSafe ? "success" : "danger"}
+            title={capSafe ? `Капитал покрывает дефолт якоря при лимите ${pct(cap, 0)}` : `Лимит платформы ${pct(cap, 0)} выше безопасной доли ${pct(st.max_share, 1)}`}>
+            Лимит в платформе: {pct(cap, 0)}. Потери {mlnM(platform.loss)} против капитала {mlnM(platform.capital)} (покрытие {num(platform.coverage, 2)}×).
+          </Callout>
+        </section>
+      )}
       <div className="grid grid-cols-2 gap-x-6 gap-y-5 lg:grid-cols-4">
         <Metric label={`Потери организатора, месяц ${st.month}`} value={num(st.loss, 0)} unit="млн ₽" tone="negative"
           how={`${pct(st.share, 0)} × ${num(st.bal, 1)} × LGD × доля риска ${pct(st.borne, 0)}`} />
@@ -326,8 +349,8 @@ function StressBlock({ st }: { st: Stress }) {
         <Metric label="Безопасная доля якоря" value={pct(st.max_share, 1)} note="при которой капитал покрывает потерю" how="капитал / (остаток × LGD × (1 − покрытие) × доля риска)" />
         <Metric label="Пик капитала с событием" value={num(st.eq_need_with_event, 0)} unit="млн ₽" note={`без события ${num(st.eq_need_peak, 0)}`} />
       </div>
-      {!st.covered && <Callout tone="danger" title="Капитал под риск не покрывает дефолт якоря">
-        Помогают лимит концентрации ниже {pct(st.max_share, 0)}, страхование требований и дополнительный капитал. Ожидаемые потери года, заложенные в цену: {mlnM(st.el_year)}.
+      {!st.covered && <Callout tone="warning" title={`При доле ${pct(st.share, 0)} капитал под риск не покрывает дефолт якоря`}>
+        Помогают лимит концентрации ниже {pct(st.max_share, 1)}, страхование требований и дополнительный капитал. Ожидаемые потери года, заложенные в цену: {mlnM(st.el_year)}. Сетка ниже — для доли книги {pct(st.share, 0)}.
       </Callout>}
       <div>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3">

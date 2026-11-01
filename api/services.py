@@ -19,7 +19,7 @@ from adapters.ports import PortError
 from db.models import Anchor, Event, Invoice, RegistryEntry, Setting, Supplier, SupplierAnchor
 from engine import funding, lifecycle, pricing, registry
 from engine.lifecycle import FINANCED, Status
-from engine.portfolio import ANCHOR_CAP, INDUSTRY_CAP, PROGRAM_SIZE, Exposure, check_limits, first_failed
+from engine.portfolio import ANCHOR_CAP, INDUSTRY_CAP, PROGRAM_SIZE, Exposure, check_limits, first_failed, pct
 
 D = Decimal
 ST = Status
@@ -76,6 +76,17 @@ def set_setting(s: Session, key: str, value: str) -> None:
 
 def get_now(s: Session) -> datetime:
     return datetime.fromisoformat(get_setting(s, "now"))
+
+
+def anchor_cap(s: Session) -> Decimal:
+    """Потолок концентрации на одного якоря из настроек платформы (по умолчанию 15%)."""
+    return D(get_setting(s, "anchor_cap", str(ANCHOR_CAP)))
+
+
+def set_anchor_cap(s: Session, cap: Decimal) -> None:
+    set_setting(s, "anchor_cap", str(cap))
+    tune_concentration_story(s)
+    log(s, get_now(s), "settings", f"Потолок концентрации на одного якоря: {pct(cap)}")
 
 
 def sync_mock_config(s: Session) -> mocks.MockConfig:
@@ -181,7 +192,7 @@ def limit_checks(s: Session, inv: Invoice) -> list:
     return check_limits(
         new=Exposure(inv.anchor_id, inv.supplier_id, inv.anchor.industry_code, rub(inv.amount_kop)),
         book=_book(s, inv.id), anchor_limit=rub(inv.anchor.limit_kop), supplier_limit_value=sup_limit,
-        program_size=prog,
+        program_size=prog, anchor_cap=anchor_cap(s),
     )
 
 
@@ -400,7 +411,7 @@ def advance(s: Session, days: int = 0, hours: int = 0) -> dict:
 
 def tune_concentration_story(s: Session) -> None:
     """Подбирает плановый размер программы так, чтобы сюжетный крупный счёт упирался
-    в потолок концентрации 25%, а обычные счета якоря проходили."""
+    в потолок концентрации (настройка anchor_cap), а обычные счета якоря проходили."""
     big = s.scalar(select(Invoice).where(Invoice.story == "concentration"))
     if not big:
         return
@@ -417,7 +428,13 @@ def tune_concentration_story(s: Session) -> None:
     x = sum((e.amount for e in book if e.anchor_id == big.anchor_id), D(0))
     total = sum((e.amount for e in book), D(0))
     amt = rub(big.amount_kop)
-    program = max((x + amt - D(5_000_000)) / ANCHOR_CAP, total + amt)
+    # Потолок якоря ставится посередине между самым крупным открытым предложением того же якоря
+    # и сюжетным счётом: обычные предложения проходят, сюжетный счёт — нет
+    others = s.scalars(select(Invoice.amount_kop).where(
+        Invoice.anchor_id == big.anchor_id, Invoice.status == ST.OFFERED.value, Invoice.id != big.id)).all()
+    top = max((rub(k) for k in others), default=amt - D(10_000_000))
+    headroom = (top + amt) / 2 if top < amt else amt - D(5_000_000)
+    program = max((x + headroom) / anchor_cap(s), total + amt)
     set_setting(s, "program_size", str(program.quantize(D(1))))
 
 
@@ -489,12 +506,13 @@ def overview(s: Session) -> dict:
         by_month[i.funded_at.strftime("%Y-%m")] += i.amount_kop
     by_anchor = []
     prog = D(get_setting(s, "program_size", str(PROGRAM_SIZE)))
+    cap = anchor_cap(s)
     base = max(rub(out_amt), prog)
     for a in anchors.values():
         amt = sum(i.amount_kop for i in outstanding if i.anchor_id == a.id)
         by_anchor.append({"anchor_id": a.id, "name": a.name, "rating": a.rating, "industry": a.industry,
                           "outstanding": rub(amt), "share": (rub(amt) / base) if base else D(0),
-                          "limit": rub(a.limit_kop), "cap": ANCHOR_CAP * base})
+                          "limit": rub(a.limit_kop), "cap": cap * base})
     by_source: dict[str, int] = defaultdict(int)
     for i in outstanding:
         by_source[i.funding_source or "bank"] += i.amount_kop
@@ -546,7 +564,7 @@ def overview(s: Session) -> dict:
         "status_counts": dict(status_counts),
         "gates": gates(s, invs, now, out_amt, overdue30, off, blocked),
         "program_size": prog,
-        "anchor_cap": ANCHOR_CAP,
+        "anchor_cap": cap,
         "industry_cap": INDUSTRY_CAP,
     }
 

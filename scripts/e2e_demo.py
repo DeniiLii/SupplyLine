@@ -31,8 +31,8 @@ def run(base: str, step=lambda n, text: print(f"{n}. {text}")) -> None:
         page.get_by_role("link", name="Лента счетов").click()
         page.get_by_role("row", name="SL-2026-КРУПНЫЙ").click()
         expect(page.get_by_role("button", name="Продать счёт")).to_be_disabled()
-        expect(page.get_by_role("alert").filter(has_text="Концентрация на одного якоря")).to_be_visible()
-        step(2, "Крупный счёт: покупка заблокирована потолком концентрации 25% с объяснением правила")
+        expect(page.get_by_role("alert").filter(has_text="Концентрация на одного якоря: не больше 15%")).to_be_visible()
+        step(2, "Крупный счёт заблокирован потолком концентрации 15% с объяснением правила")
         page.keyboard.press("Escape")
 
         page.get_by_role("tab", name="Предложения").click()
@@ -66,9 +66,10 @@ def run(base: str, step=lambda n, text: print(f"{n}. {text}")) -> None:
         step(6, "+30 дней: просрочка 30 дней → регресс к поставщику")
 
         page.get_by_role("link", name="Портфельная модель").click()
-        expect(page.get_by_text("Капитал под риск не покрывает дефолт якоря").first).to_be_visible()
+        expect(page.get_by_text("Книга Excel, доля якоря 25%: капитал не покрывает дефолт").first).to_be_visible()
+        expect(page.get_by_text("Капитал покрывает дефолт якоря при лимите 15%").first).to_be_visible()
         expect(page.get_by_text("16,4%").first).to_be_visible()
-        step(7, "Стресс: дефолт якоря 25% даёт потери 1 033 млн ₽ против капитала 676; безопасная доля 16,4%")
+        step(7, "Стресс: при доле 25% капитал не покрывает дефолт якоря, при лимите платформы 15% покрывает")
 
         page.get_by_role("link", name="Обзор платформы").click()
         expect(page.get_by_text("Фаза 0: показатели ворот 1")).to_be_visible()

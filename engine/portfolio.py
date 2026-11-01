@@ -12,9 +12,13 @@ from decimal import Decimal
 
 D = Decimal
 
-ANCHOR_CAP = D("0.25")
+# По умолчанию 15%: ниже безопасной доли стресс-теста финмодели (16,35%), см. DECISIONS 28.
+# Платформа хранит текущее значение в настройке anchor_cap (0,05–0,25).
+ANCHOR_CAP = D("0.15")
 INDUSTRY_CAP = D("0.40")
-PROGRAM_SIZE = D("1500000000")  # ₽ 1,5 млрд — плановый портфель фазы 0 (Гипотеза)
+# ₽ 2,5 млрд — плановый портфель фазы 0 (Гипотеза). При потолке 15% даёт тот же предел на якоря в рублях
+# (375 млн ₽), что прежние 1,5 млрд при 25%: см. DECISIONS 29
+PROGRAM_SIZE = D("2500000000")
 
 
 @dataclass(frozen=True)
@@ -36,6 +40,12 @@ class LimitCheck:
     def as_dict(self) -> dict:
         return {"rule": self.rule, "ok": self.ok, "used": self.used, "limit": self.limit,
                 "detail": self.detail}
+
+
+def pct(x: Decimal) -> str:
+    """0,15 → «15%», 0,125 → «12,5%»."""
+    v = (x * 100).normalize()
+    return f"{v:f}".replace(".", ",") + "%"
 
 
 def supplier_limit(share: Decimal, turnover_90d: Decimal, anchor_sublimit: Decimal) -> Decimal:
@@ -60,10 +70,12 @@ def check_limits(
         LimitCheck("Лимит поставщика", by_supplier + new.amount <= supplier_limit_value,
                    by_supplier + new.amount, supplier_limit_value,
                    "Лимит = min(доля × оборот с якорем за 90 дней, суб-лимит якоря)"),
-        LimitCheck("Концентрация на одного якоря: не больше 25%", (by_anchor + new.amount) <= anchor_cap * base,
+        LimitCheck(f"Концентрация на одного якоря: не больше {pct(anchor_cap)}",
+                   (by_anchor + new.amount) <= anchor_cap * base,
                    by_anchor + new.amount, anchor_cap * base,
                    "Доля якоря в портфеле (база — больше из портфеля и плана программы)"),
-        LimitCheck("Концентрация на отрасль: не больше 40%", (by_industry + new.amount) <= industry_cap * base,
+        LimitCheck(f"Концентрация на отрасль: не больше {pct(industry_cap)}",
+                   (by_industry + new.amount) <= industry_cap * base,
                    by_industry + new.amount, industry_cap * base,
                    "Доля отрасли в портфеле"),
     ]

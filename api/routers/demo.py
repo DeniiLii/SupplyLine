@@ -27,6 +27,7 @@ def state(db: Session = Depends(get_db)):
         "scenario": sv.get_setting(db, "scenario", "M"),
         "key_rate": D(sv.get_setting(db, "key_rate", "0.14")),
         "price_mode": int(sv.get_setting(db, "price_mode", "1")),
+        "anchor_cap": sv.anchor_cap(db),
         "mocks": {k: sv.get_setting(db, k, "0") == "1" for k in ("edo_down", "anchor_rejects", "payment_fails",
                                                                   "cfa_down")},
         "scenarios": {k: {"name": v["name"], "rate": funding.scenario_rate(k, D(sv.get_setting(db, "key_rate", "0.14"))),
@@ -43,6 +44,8 @@ def put_settings(body: SettingsIn, db: Session = Depends(get_db)):
         sv.set_setting(db, "key_rate", str(body.key_rate))
     if body.price_mode is not None:
         sv.set_setting(db, "price_mode", str(body.price_mode))
+    if body.anchor_cap is not None:
+        sv.set_anchor_cap(db, body.anchor_cap)
     for k in ("edo_down", "anchor_rejects", "payment_fails", "cfa_down"):
         v = getattr(body, k)
         if v is not None:
@@ -305,6 +308,7 @@ def investor(db: Session = Depends(get_db), cover: Decimal = Query(D(0), ge=0, l
         "expected_loss_no_cover": el_total / (1 - cover) if cover < 1 else el_total,
         "concentration": sorted([{"anchor": k, "amount": v, "share": (v / outstanding if outstanding else D(0))}
                                  for k, v in conc.items()], key=lambda x: -x["amount"]),
+        "anchor_cap": sv.anchor_cap(db),
         "legal_note": "Инвестор получает требование к эмитенту (модельному SPV), а не к якорю. Риск якоря доходит "
                       "до инвестора только через обеспечение или страхование; доля покрытия задаётся параметром.",
     }

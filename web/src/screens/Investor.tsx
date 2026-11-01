@@ -12,7 +12,7 @@ const monthName = (m: string) => { const [y, mm] = m.split("-"); return `${MONTH
 type I = {
   cover: number; tranches: { id: string; month: string; source: string; source_name: string; amount: number; count: number; outstanding: number; repaid: number; overdue: number; wavg_days: number; yield: number; net_yield: number; el: number; top_anchor: string; top_anchor_share: number; issuer: string }[];
   total_issued: number; outstanding: number; expected_loss: number; expected_loss_no_cover: number;
-  concentration: { anchor: string; amount: number; share: number }[]; legal_note: string;
+  concentration: { anchor: string; amount: number; share: number }[]; legal_note: string; anchor_cap: number;
 };
 
 export default function Investor() {
@@ -57,20 +57,20 @@ export default function Investor() {
               </div>
             )}
           </Card>
-          <Card title="Концентрация по якорям" lead="Доля непогашенных траншей. Потолок концентрации платформы — 25% на якоря.">
+          <Card title="Концентрация по якорям" lead={`Доля непогашенных траншей. Лимит в платформе: ${pct(d.anchor_cap, 0)} на якоря.`}>
             <ul className="flex flex-col gap-3">
               {d.concentration.map((c) => (
                 <li key={c.anchor} className="grid items-center gap-3 md:grid-cols-[200px_1fr_120px]">
                   <span className="text-small font-medium">{c.anchor}</span>
                   <div className="h-2 rounded-full" style={{ background: "var(--primary-soft-2)" }} role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(c.share * 100)} aria-label={`${c.anchor}: ${pct(c.share, 0)}`}>
-                    <div className="h-2 rounded-full" style={{ width: `${c.share * 100}%`, background: c.share > 0.25 ? "var(--danger)" : "var(--primary)" }} />
-                    <div className="relative -mt-3 h-4 border-l-2" style={{ marginLeft: "25%", borderColor: "var(--text-2)" }} title="потолок 25%" />
+                    <div className="h-2 rounded-full" style={{ width: `${c.share * 100}%`, background: c.share > d.anchor_cap ? "var(--danger)" : "var(--primary)" }} />
+                    <div className="relative -mt-3 h-4 border-l-2" style={{ marginLeft: `${d.anchor_cap * 100}%`, borderColor: "var(--text-2)" }} title={`потолок ${pct(d.anchor_cap, 0)}`} />
                   </div>
                   <span className="num text-right text-small">{pct(c.share, 1)} · {mln(c.amount, 0)}</span>
                 </li>
               ))}
             </ul>
-            <p className="mt-3 text-caption text-ink3">Вертикальная черта — потолок 25%; красная полоса правее неё — доля выше потолка. Внутри траншей концентрация может быть выше, чем в портфеле платформы.</p>
+            <p className="mt-3 text-caption text-ink3">Вертикальная черта — потолок {pct(d.anchor_cap, 0)}; красная полоса правее неё — доля выше потолка. Внутри траншей концентрация может быть выше, чем в портфеле платформы.</p>
           </Card>
         </div>
       )}
