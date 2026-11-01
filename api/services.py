@@ -78,9 +78,12 @@ def get_now(s: Session) -> datetime:
     return datetime.fromisoformat(get_setting(s, "now"))
 
 
-def sync_mock_config(s: Session) -> None:
-    for k in ("edo_down", "anchor_rejects", "payment_fails", "cfa_down"):
-        setattr(mocks.CONFIG, k, get_setting(s, k, "0") == "1")
+def sync_mock_config(s: Session) -> mocks.MockConfig:
+    """Конфиг имитаций из настроек БД текущего посетителя, в контексте текущего запроса."""
+    cfg = mocks.MockConfig(**{k: get_setting(s, k, "0") == "1"
+                              for k in ("edo_down", "anchor_rejects", "payment_fails", "cfa_down")})
+    mocks.set_config(cfg)
+    return cfg
 
 
 def log(s: Session, ts: datetime, kind: str, message: str, invoice_id: int | None = None,

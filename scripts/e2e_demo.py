@@ -12,7 +12,6 @@ import sys
 from playwright.sync_api import expect, sync_playwright
 
 
-
 def run(base: str, step=lambda n, text: print(f"{n}. {text}")) -> None:
     """Проходит 8 шагов показа кликами. Падает AssertionError/TimeoutError при любом расхождении."""
     with sync_playwright() as pw:

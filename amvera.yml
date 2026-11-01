@@ -1,0 +1,13 @@
+# Amvera Cloud (https://amvera.ru): деплой через git push, сборка по Dockerfile.
+# Формат конфигурации нужно сверить с документацией Amvera при развёртывании.
+meta:
+  environment: docker
+  toolchain:
+    name: docker
+    version: latest
+build:
+  dockerfile: Dockerfile
+  skip: false
+run:
+  persistenceMount: /data
+  containerPort: 8000

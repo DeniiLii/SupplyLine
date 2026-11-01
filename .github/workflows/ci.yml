@@ -66,3 +66,14 @@ jobs:
           SUPPLYLINE_SANDBOX=1 SUPPLYLINE_DB=/tmp/sl/template.sqlite3 SUPPLYLINE_SESSIONS_DIR=/tmp/sl/sessions \
             python -m uvicorn api.main:app --port 8000 &
           python scripts/smoke.py http://127.0.0.1:8000 --wait 60
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t supplyline .
+      - run: docker run -d --name sl -p 8000:8000 -e SUPPLYLINE_SANDBOX=1 supplyline
+      - name: Смоук против контейнера
+        run: python3 scripts/smoke.py http://127.0.0.1:8000 --wait 90
+      - if: failure()
+        run: docker logs sl

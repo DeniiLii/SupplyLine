@@ -1,0 +1,10 @@
+services:
+  supplyline:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      PORT: "8000"
+      SUPPLYLINE_SANDBOX: "1"
+      SUPPLYLINE_MOCK_LATENCY: "1"
+    restart: unless-stopped

@@ -1,0 +1,13 @@
+# Render (https://render.com): Blueprint с Docker-сервисом. Проверить формат при развёртывании.
+services:
+  - type: web
+    name: supplyline-demo
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    envVars:
+      - key: SUPPLYLINE_SANDBOX
+        value: "1"
+      - key: SUPPLYLINE_MOCK_LATENCY
+        value: "1"
