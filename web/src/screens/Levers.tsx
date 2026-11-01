@@ -26,7 +26,7 @@ export function LeversCard() {
     setSel((cur) => (cur.includes(k) ? cur.filter((x) => x !== k) : cur.length >= MAX_LINES ? [...cur.slice(1), k] : [...cur, k]));
 
   return (
-    <Card title={ru.levers.title} lead={<>{ru.levers.lead} <Chip tone="warning">{q.data?.label ?? ru.levers.hypothesis}</Chip></>}>
+    <Card title={ru.levers.title} lead={<>{ru.levers.lead} <Chip tone="warning">Гипотеза</Chip><span className="mt-1 block">{q.data?.label ?? ru.levers.hypothesis}</span></>}>
       {q.isError && <ErrorBox text={errorText(q.error)} onRetry={() => q.refetch()} />}
       {!q.data ? <Loading rows={6} /> : <Body d={q.data} sel={sel} toggle={toggle} />}
     </Card>

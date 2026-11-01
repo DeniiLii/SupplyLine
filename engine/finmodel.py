@@ -809,7 +809,7 @@ def warnings(p: FinParams, res: dict) -> list[dict]:
                         detail="Модель не окупается в горизонте 60 месяцев."))
     if not res["stress"]["covered"]:
         out.append(dict(code="capital_not_covering", level="danger",
-                        text="Капитал под риск не покрывает дефолт якоря",
+                        text=f"При доле якоря {p.stress_share * 100:.0f}% капитал под риск не покрывает его дефолт",
                         detail="Нужен меньший лимит на якорь, страхование или больше капитала."))
     if any(y["margin"] < 0 for y in res["years"]):
         out.append(dict(code="negative_margin", level="danger",

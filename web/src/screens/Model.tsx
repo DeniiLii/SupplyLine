@@ -337,8 +337,8 @@ function StressBlock({ st, platform, cap }: { st: Stress; platform?: Stress; cap
             Потери {mlnM(st.loss)} против капитала {mlnM(st.capital)} (покрытие {num(st.coverage, 2)}×). Безопасная доля {pct(st.max_share, 1)}.
           </Callout>
           <Callout tone={capSafe ? "success" : "danger"}
-            title={capSafe ? `Капитал покрывает дефолт якоря при лимите ${pct(cap, 0)}` : `Лимит платформы ${pct(cap, 0)} выше безопасной доли ${pct(st.max_share, 1)}`}>
-            Лимит в платформе: {pct(cap, 0)}. Потери {mlnM(platform.loss)} против капитала {mlnM(platform.capital)} (покрытие {num(platform.coverage, 2)}×).
+            title={capSafe ? `Капитал покрывает дефолт якоря при лимите ${pct(cap, 0)} (LGD 60%)` : `Лимит платформы ${pct(cap, 0)} выше безопасной доли ${pct(st.max_share, 1)}`}>
+            Лимит в платформе: {pct(cap, 0)}. При LGD 80% и выше не хватает и при этой доле: см. сетку ниже. Потери {mlnM(platform.loss)} против капитала {mlnM(platform.capital)} (покрытие {num(platform.coverage, 2)}×).
           </Callout>
         </section>
       )}

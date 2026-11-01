@@ -171,7 +171,7 @@ export function TourButton() {
           </div>
           <ol className="mb-3 flex gap-1" aria-hidden>
             {STEPS.map((_, n) => (
-              <li key={n} className="h-1 flex-1 rounded-full" style={{ background: n <= i ? "var(--primary)" : "var(--line)" }} />
+              <li key={n} className="h-1 flex-1 rounded-full" style={{ background: n <= i ? "var(--primary)" : "var(--primary-soft-2)" }} />
             ))}
           </ol>
           <RDialog.Description id="tour-text" className="text-small text-ink2">{step.text}</RDialog.Description>
@@ -195,7 +195,7 @@ export function TourButton() {
                 : <button className="btn btn-primary btn-sm" onClick={() => { setOpen(false); goto(0); }}>{ru.tour.finish}</button>}
             </span>
           </div>
-          <p className="mt-3 text-caption text-ink3">{ru.tour.keys}</p>
+          <p className="mt-3 text-caption text-ink3">{step.run ? ru.tour.keys : ru.tour.keysShort}</p>
         </RDialog.Content>
       </RDialog.Portal>
     </RDialog.Root>

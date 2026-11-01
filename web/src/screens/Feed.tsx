@@ -78,7 +78,6 @@ export default function Feed() {
         {!list.data ? <Loading rows={8} /> : list.data.items.length === 0 ? <EmptyState title={ru.feed.empty} /> : (
           <>
             <p className="mb-2 hidden text-caption text-ink3 md:block">Проверки по порядку: УПД в ЭДО, акцепт якоря, требование в реестре, лимиты. Галочка — пройдено, пунктирный круг — ещё не проверялось, красный щит — не пройдено.</p>
-            <p className="mb-2 hidden text-caption text-ink3 md:block">Проверки по порядку: УПД в ЭДО, акцепт якоря, требование в реестре, лимиты. Галочка — пройдено, пунктирный круг — ещё не проверялось, красный щит — не пройдено.</p>
             <InvoiceTable items={list.data.items} onOpen={(i) => nav(`/feed/${i}`)} />
             <div className="mt-4 flex items-center justify-between gap-3 text-small text-ink2">
               <span className="num">{page * 40 + 1}–{Math.min((page + 1) * 40, list.data.total)} из {list.data.total}</span>
