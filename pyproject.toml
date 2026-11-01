@@ -34,6 +34,8 @@ ignore = ["E501", "B008", "B905"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = "-m 'not e2e'"
+markers = ["e2e: браузерные сценарии и живой сервер (pytest -m e2e)"]
 
 [tool.ruff.lint.per-file-ignores]
 "scripts/*" = ["E701", "E702", "E731", "E741"]

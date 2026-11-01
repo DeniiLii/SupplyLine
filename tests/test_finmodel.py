@@ -252,3 +252,29 @@ def test_variants_run():
             for t in (30, 45, 60):
                 res = run(FinParams(ks_scenario=ks, ks_pass_through=pt, t_days=Decimal(t)))
                 assert all(c["ok"] for c in res["checks"])
+
+
+# ---------------------------------------------------------------- граница позиции цены (WP1)
+
+
+def test_position_at_cap_is_within_premium():
+    p = FinParams()
+    cap = fm.cap_credit(p)
+    assert fm.price_position(p, cap) == "дороже кредита, в пределах премии"
+    assert fm.price_position(p, cap + Decimal("1e-34")) == "дороже кредита, в пределах премии"
+    assert fm.price_position(p, cap + Decimal("1e-6")) == "выше потолка рынка"
+
+
+def test_position_at_msp_is_cheaper():
+    p = FinParams()
+    assert fm.price_position(p, p.msp_rate) == "дешевле кредита МСП"
+    assert fm.price_position(p, p.msp_rate + Decimal("1e-34")) == "дешевле кредита МСП"
+    assert fm.price_position(p, p.msp_rate + Decimal("1e-6")) == "дороже кредита, в пределах премии"
+
+
+@pytest.mark.parametrize("t", [30, 45, 60])
+def test_capped_mode_stays_within_premium(t):
+    # Режим 2 ставит eff ровно на потолок; при сроке 30 Decimal раньше давал +1e-34 и «выше потолка»
+    p = FinParams(t_days=Decimal(t))
+    for sc in "ABCM":
+        assert fm.unit_economics(p, sc, 2)["position"] == "дороже кредита, в пределах премии"

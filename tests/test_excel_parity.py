@@ -2,12 +2,14 @@
 
 Сверяются листы «Месяцы», «Годы», «Сценарии», «Чувствит», «Стресс», «Ставки», «Юнит».
 Допуск: 1e-6 относительный (и 1e-9 абсолютный около нуля).
-Второй тест пересчитывает копии книги в LibreOffice с другими переключателями;
-без LibreOffice он пропускается.
+Второй тест пересчитывает копии книги в LibreOffice с другими переключателями.
+Без LibreOffice локально он пропускается с видимой причиной; в CI (переменная CI) отсутствие
+LibreOffice — ошибка, чтобы 13 вариантов не «зеленели» молча.
 """
 
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 import tempfile
@@ -186,9 +188,12 @@ CELL_TO_PARAM = {"B33": ("scenario", lambda v: "ABCM"[v - 1]), "B47": ("price_mo
                  "B41": ("t_days", Decimal), "B43": ("cover", lambda v: Decimal(str(v)))}
 
 
-@pytest.mark.skipif(_soffice() is None, reason="LibreOffice не установлен: пересчёт вариантов книги пропущен")
 @pytest.mark.parametrize("variant", VARIANTS, ids=lambda v: ",".join(f"{k}={x}" for k, x in v.items()))
 def test_excel_parity_variants(variant):
+    if _soffice() is None:
+        if os.environ.get("CI"):
+            pytest.fail("В CI нужен LibreOffice: без него варианты книги не пересчитываются")
+        pytest.skip("LibreOffice не установлен: пересчёт вариантов книги пропущен (в CI обязателен)")
     with tempfile.TemporaryDirectory() as tmp:
         src = Path(tmp) / "in.xlsx"
         wb = openpyxl.load_workbook(BOOK)

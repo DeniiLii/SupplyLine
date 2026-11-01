@@ -170,6 +170,19 @@ def cap_credit(p: FinParams) -> Decimal:
     return p.msp_rate + p.speed_prem
 
 
+# Допуск границы классификации: в режиме «с потолком» eff равна потолку алгебраически,
+# но Decimal даёт расхождение ~1e-34 в любую сторону (Excel сравнивает двоичные числа и попадает в «равно»)
+EPS = D("1e-12")
+
+
+def price_position(p: FinParams, eff: Decimal) -> str:
+    if eff <= p.msp_rate + EPS:
+        return "дешевле кредита МСП"
+    if eff <= cap_credit(p) + EPS:
+        return "дороже кредита, в пределах премии"
+    return "выше потолка рынка"
+
+
 def cap_discount(p: FinParams, t: Decimal | None = None, e: Decimal | None = None) -> Decimal:
     t = p.t_days if t is None else t
     e = cap_credit(p) if e is None else e
@@ -564,12 +577,7 @@ def unit_economics(p: FinParams, scenario: str, mode: int, year: int = 5,
     margin = Dsc - fund - el - opex
     msp_cost = recv * p.msp_rate * k
     eff = eff_rate(r_app, t)
-    if eff <= p.msp_rate:
-        position = "дешевле кредита МСП"
-    elif eff <= cap_credit(p):
-        position = "дороже кредита, в пределах премии"
-    else:
-        position = "выше потолка рынка"
+    position = price_position(p, eff)
     return dict(
         scenario=scenario, mode=mode, year=year, F=F, t=t, r=r_app, eff=eff, D=Dsc, recv=recv,
         fund=fund, el=el, opex=opex, margin=margin, margin_rate=r.margin(mode, p),

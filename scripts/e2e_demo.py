@@ -2,32 +2,29 @@
 симулятор → лента счетов → продажа → попытка двойной продажи → +30 дней → просрочка → стресс якоря → ворота фазы 0.
 
 Запуск: сервер на http://127.0.0.1:8000, затем python scripts/e2e_demo.py [base_url]
-Перед прогоном демо сбрасывается (POST /api/demo/reset).
+Перед прогоном демо сбрасывается (POST /api/demo/reset). Те же шаги вызывает tests/test_e2e_jury.py.
 """
 
 from __future__ import annotations
 
 import sys
-import urllib.request
 
 from playwright.sync_api import expect, sync_playwright
 
-BASE = sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:8000"
 
 
-def step(n: int, text: str) -> None:
-    print(f"{n}. {text}")
-
-
-def main() -> None:
-    urllib.request.urlopen(urllib.request.Request(BASE + "/api/demo/reset", method="POST")).read()
+def run(base: str, step=lambda n, text: print(f"{n}. {text}")) -> None:
+    """Проходит 8 шагов показа кликами. Падает AssertionError/TimeoutError при любом расхождении."""
     with sync_playwright() as pw:
         b = pw.chromium.launch()
-        page = b.new_page(viewport={"width": 1440, "height": 900}, locale="ru-RU")
+        ctx = b.new_context(viewport={"width": 1440, "height": 900}, locale="ru-RU")
+        page = ctx.new_page()
+        # Сброс через браузер: в режиме песочницы он сбрасывает именно эту сессию (cookie)
+        page.request.post(base + "/api/demo/reset")
         errors: list[str] = []
         page.on("pageerror", lambda e: errors.append(str(e)))
 
-        page.goto(BASE + "/simulator")
+        page.goto(base + "/simulator")
         expect(page.get_by_text("Дороже кредита МСП на")).to_be_visible()
         expect(page.get_by_text("19,67%").first).to_be_visible()
         step(1, "Симулятор: эффективная ставка 19,67% и честная плашка «Дороже кредита МСП»")
@@ -80,8 +77,12 @@ def main() -> None:
         step(8, "Ворота фазы 0: одобрения, просрочка 30+, фрод, время до денег, внешнее фондирование")
 
         assert not errors, errors
+        page.request.post(base + "/api/demo/reset")
         b.close()
-    urllib.request.urlopen(urllib.request.Request(BASE + "/api/demo/reset", method="POST")).read()
+
+
+def main() -> None:
+    run(sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:8000")
     print("Сценарий пройден кликами без ручной подготовки.")
 
 
