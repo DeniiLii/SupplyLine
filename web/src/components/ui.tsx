@@ -19,6 +19,7 @@ import {
 import { createContext, useCallback, useContext, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { glossary, ru } from "../copy/ru";
 import { num } from "../api/format";
+import { useTourOpen } from "./tourState";
 
 /* ---------------------------------------------------------------- бейдж происхождения */
 
@@ -582,11 +583,16 @@ export function Dialog({
   children: ReactNode;
   wide?: boolean;
 }) {
+  const touring = useTourOpen();
   return (
-    <RDialog.Root open={open} onOpenChange={onOpenChange}>
+    <RDialog.Root open={open} onOpenChange={onOpenChange} modal={!touring}>
       <RDialog.Portal>
-        <RDialog.Overlay className="fixed inset-0 z-40" style={{ background: "rgba(11,18,34,.45)" }} />
+        {touring
+          ? <div className="pointer-events-none fixed inset-0 z-40" style={{ background: "rgba(11,18,34,.45)" }} aria-hidden />
+          : <RDialog.Overlay className="fixed inset-0 z-40" style={{ background: "rgba(11,18,34,.45)" }} />}
         <RDialog.Content
+          // Клик по панели тура не закрывает карточку
+          onPointerDownOutside={(e) => { if ((e.target as Element | null)?.closest?.("[data-tour]")) e.preventDefault(); }}
           onKeyDown={(e) => {
             // Подсказка Radix внутри диалога может оставить свой слой и перехватывать Esc
             if (e.key === "Escape" && !document.querySelector("[role=tooltip]")) onOpenChange(false);

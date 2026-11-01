@@ -6,6 +6,7 @@ import { api, errorText } from "../api/client";
 import { dateTime } from "../api/format";
 import { ru } from "../copy/ru";
 import { useTheme } from "./theme";
+import { TourButton } from "./Tour";
 import { Dialog, Spinner, Tip, useToast } from "./ui";
 
 export type Role = "supplier" | "anchor" | "investor" | "organizer";
@@ -177,7 +178,8 @@ export function Layout({ children }: { children: ReactNode }) {
               ))}
             </select>
           </div>
-          <div className="ml-auto hidden lg:block">
+          <div className="ml-auto hidden items-center gap-3 lg:flex">
+            <TourButton />
             <Clock />
           </div>
           <div className="flex items-center gap-1 lg:ml-0 ml-auto">
@@ -221,8 +223,9 @@ export function Layout({ children }: { children: ReactNode }) {
             ))}
           </ul>
         </nav>
-        <div className="container-page border-t border-line py-2 lg:hidden">
+        <div className="container-page flex flex-wrap items-center gap-3 border-t border-line py-2 lg:hidden">
           <Clock />
+          <TourButton />
         </div>
       </header>
       <main id="main" className="container-page py-6 md:py-8">
