@@ -82,7 +82,7 @@ def test_invoices_and_demo_script(client):
     big = next(i for i in lst["items"] if i["story"] == "concentration")
     # Крупный счёт упирается в потолок концентрации
     r = client.post(f"/api/invoices/{big['id']}/sell")
-    assert r.status_code == 422 and "25%" in r.json()["rule"]
+    assert r.status_code == 422 and r.json()["rule"] == "Концентрация на одного якоря: не больше 15%"
     # Обычное предложение продаётся
     offer = next(i for i in lst["items"] if i["status"] == "OFFERED" and i["story"] is None
                  and not i["review_flag"] and not i["status_reason"])
@@ -137,3 +137,79 @@ def test_roles(client):
 def test_settings_validation(client):
     assert client.put("/api/settings", json={"scenario": "Q"}).status_code == 422
     assert client.post("/api/clock/advance", json={"days": -1}).status_code == 422
+
+
+def test_anchor_cap_setting(client):
+    from sqlalchemy import select
+
+    from api import services as sv
+    from db.models import Invoice, SessionLocal
+
+    client.post("/api/demo/reset")
+    assert client.get("/api/state").json()["anchor_cap"] == 0.15
+    assert client.get("/api/overview").json()["anchor_cap"] == 0.15
+    assert client.put("/api/settings", json={"anchor_cap": 0.3}).status_code == 422
+    assert client.put("/api/settings", json={"anchor_cap": 0.01}).status_code == 422
+    # Прежнее поведение: при 25% крупный счёт упирается в потолок 25%
+    assert client.put("/api/settings", json={"anchor_cap": 0.25}).json()["anchor_cap"] == 0.25
+    with SessionLocal() as s:
+        big = s.scalar(select(Invoice).where(Invoice.story == "concentration"))
+        bad = [c for c in sv.limit_checks(s, big) if not c.ok]
+    assert [c.rule for c in bad] == ["Концентрация на одного якоря: не больше 25%"]
+    client.post("/api/demo/reset")
+
+
+def test_concentration_story_tuning(client):
+    """Перебор суммы сюжетного счёта: он упирается в потолок 15%, открытые предложения того же якоря — нет."""
+    from sqlalchemy import select
+
+    from api import services as sv
+    from db.models import Invoice, SessionLocal
+
+    client.post("/api/demo/reset")
+    with SessionLocal() as s:
+        big = s.scalar(select(Invoice).where(Invoice.story == "concentration"))
+        others = s.scalars(select(Invoice).where(Invoice.status == "OFFERED", Invoice.story.is_(None),
+                                                 Invoice.anchor_id == big.anchor_id)).all()
+        assert others
+        top = max(i.amount_kop for i in others) / 100 / 1e6
+        for amount_mln in (top + 3, 25, 30, 39.5):
+            if amount_mln <= top + 2:
+                continue
+            big.amount_kop = int(amount_mln * 1e6 * 100)
+            sv.tune_concentration_story(s)
+            assert [c.rule for c in sv.limit_checks(s, big) if not c.ok] ==                 ["Концентрация на одного якоря: не больше 15%"], amount_mln
+            for inv in others:
+                assert all(c.ok for c in sv.limit_checks(s, inv) if c.rule.startswith("Концентрация")),                     (amount_mln, inv.number)
+        s.rollback()
+
+
+LEVER_SNAPSHOT = {
+    # key: (месяц окупаемости, накопленная ЧП 5 лет, пик капитала, ЧП Г5, эфф. ставка Г5, стресс покрыт)
+    "base": (None, -637.2041076688105, 2058.145733026977, 130.44936439198082, 0.20689618841246485, False),
+    "bank": (None, -480.4615187540041, 2700.682808376139, 207.01613647158754, 0.1966550679088562, False),
+    "t60": (58, 106.66238702136056, 2835.760616869264, 465.8915428802998, 0.1982573271472219, False),
+    "m35": (50, 520.0085086921442, 2422.4144951984804, 587.9054220696783, 0.2100079360580466, False),
+    "cap15": (None, -637.2041076688105, 2058.145733026977, 130.44936439198082, 0.20689618841246485, True),
+}
+
+
+def test_levers_presets(client):
+    import time
+
+    t = time.time()
+    r = client.get("/api/finmodel/levers")
+    assert r.status_code == 200 and time.time() - t < 1
+    j = r.json()
+    assert "Гипотеза" in j["label"]
+    got = {p["key"]: p for p in j["presets"]}
+    assert list(got) == list(LEVER_SNAPSHOT)
+    for key, (pay, cum, eq, np5, eff, cov) in LEVER_SNAPSHOT.items():
+        p = got[key]
+        assert p["payback_month"] == pay
+        for name, ref in (("cum_np_5y", cum), ("eq_need_peak", eq), ("np5", np5), ("eff5", eff)):
+            assert abs(p[name] - ref) <= 1e-6 * max(1, abs(ref)), (key, name)
+        assert p["stress_covered"] is cov
+        assert len(p["cum_np"]) == 60
+        assert p["above_cap"] == (p["eff5"] > p["cap_rate"])
+        assert p["position"] in ("дешевле кредита МСП", "дороже кредита, в пределах премии", "выше потолка рынка")

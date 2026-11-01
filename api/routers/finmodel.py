@@ -57,6 +57,41 @@ def run_model(body: FinRunIn):
     return fm.to_jsonable(res)
 
 
+# Рычаги окупаемости (WP4): наборы параметров для той же модели, формулы не меняются.
+# Числа на экране берутся из ответа, здесь только параметры.
+PRESETS: list[dict] = [
+    {"key": "base", "name": "База", "note": "Смешанное фондирование M, срок 45 дней, маржа 2,4%", "params": {}},
+    {"key": "bank", "name": "Банк-партнёр", "note": "Всё фондирование через банк-партнёра (сценарий A)",
+     "params": {"scenario": "A"}},
+    {"key": "t60", "name": "Срок 60 дней", "note": "Банк-партнёр и средний срок счёта 60 дней",
+     "params": {"scenario": "A", "t_days": 60}},
+    {"key": "m35", "name": "Маржа 3,5%", "note": "Банк-партнёр, 60 дней и маржа платформы 3,5%",
+     "params": {"scenario": "A", "t_days": 60, "r_margin": "0.035"}},
+    {"key": "cap15", "name": "С лимитом 15%", "note": "База, но дефолт якоря в стресс-тесте при доле 15% (лимит платформы)",
+     "params": {"stress_share": "0.15"}},
+]
+
+
+@router.get("/levers")
+def levers():
+    out = []
+    for pr in PRESETS:
+        p = build_params(FinRunIn(**pr["params"]))
+        res = fm.run(p)
+        y5, k, st = res["years"][4], res["kpis"], res["stress"]
+        out.append({
+            "key": pr["key"], "name": pr["name"], "note": pr["note"], "params": pr["params"],
+            "payback_month": k["payback_month"], "cum_np_5y": k["cum_np_5y"], "eq_need_peak": k["eq_need_peak"],
+            "np5": y5["np"], "eff5": y5["eff"], "msp_rate": p.msp_rate, "cap_rate": fm.cap_credit(p),
+            "position": fm.price_position(p, y5["eff"]), "above_cap": y5["eff"] > fm.cap_credit(p) + fm.EPS,
+            "stress_share": st["share"], "stress_covered": st["covered"], "stress_loss": st["loss"],
+            "stress_capital": st["capital"],
+            "cum_np": [m["cum_np"] for m in res["months"]],
+        })
+    return fm.to_jsonable({"presets": out, "label": "Гипотеза: срок и маржа зависят от условий якорей, "
+                                                     "проверяются интервью (Спринт №2)"})
+
+
 @router.get("/excel")
 def excel() -> FileResponse:
     return FileResponse(finmodel_meta.BOOK, filename="SupplyLine_financial_model.xlsx",
