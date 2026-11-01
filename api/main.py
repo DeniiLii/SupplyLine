@@ -73,7 +73,7 @@ def health():
 def meta():
     return {"disclaimer": content.DISCLAIMER, "facts": content.FACTS, "checklist": content.CHECKLIST,
             "layers": content.LAYERS, "roadmap": content.ROADMAP, "reality": content.REALITY,
-            "glossary": content.GLOSSARY, "facts_as_of": "11.10.2026"}
+            "glossary": content.GLOSSARY, "facts_as_of": content.FACTS_AS_OF}
 
 
 @app.post("/api/demo/reset")

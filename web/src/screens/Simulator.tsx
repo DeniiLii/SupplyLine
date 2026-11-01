@@ -224,7 +224,7 @@ function CompareTable({ q }: { q: Quote }) {
     { name: ru.simulator.msp, rate: pct(q.compare.msp_rate, 1), badge: <Badge kind="Факт" source="Банк России, средневзвешенная ставка по рублёвым кредитам МСП до 1 года, июнь 2026" />,
       note: "Нужны одобрение, залог или поручительство" },
     { name: ru.simulator.factoring, rate: `${pct(q.compare.factoring_low, 1)} … ${pct(q.compare.factoring_high, 1)}`,
-      badge: <Badge kind="Данные 2023 года" source="Вебинар X5 для поставщиков, ноябрь 2023" />, note: "При текущей KС" },
+      badge: <Badge kind="Данные 2023 года" source="Вебинар крупного ритейлера для поставщиков, ноябрь 2023; открытого первоисточника нет" />, note: "При текущей KС" },
     { name: "Потолок рынка: кредит МСП + 1 п.п. за скорость", rate: pct(q.compare.cap_rate, 1), badge: <Badge kind="Гипотеза" source="Премия за скорость — проверяется интервью с поставщиками" />,
       note: "Сколько поставщик, по гипотезе, готов платить" },
   ];

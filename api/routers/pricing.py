@@ -33,7 +33,7 @@ def defaults():
             {"key": "msp_rate", "label": "Кредит МСП до 1 года", "value": 0.18, "badge": "Факт",
              "source": "Банк России, июнь 2026"},
             {"key": "factoring", "label": "Факторинг в программе крупного ритейлера", "value": [0.02, 0.07],
-             "badge": "Факт", "source": "Вебинар X5, ноябрь 2023 (данные 2023 года)"},
+             "badge": "Неточно", "source": "Вебинар крупного ритейлера для поставщиков, ноябрь 2023; открытого первоисточника нет"},
         ],
         "sources": {k: {"name": v["name"], "premium": float(v["premium"]), "on_balance": v["on_balance"],
                         "badge": v["badge"], "range": [float(x) for x in v["range"]]}

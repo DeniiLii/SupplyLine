@@ -33,7 +33,7 @@ RATING_PD = {"A": D("0.005"), "B": D("0.010"), "C": D("0.020"), "D": D("0.040")}
 KEY_RATE = D("0.14")
 MSP_RATE = D("0.18")
 SPEED_PREMIUM = D("0.01")
-FACTORING_RANGE = (D("0.02"), D("0.07"))  # KС + 2…7%, данные X5, ноябрь 2023
+FACTORING_RANGE = (D("0.02"), D("0.07"))  # KС + 2…7%, вебинар крупного ритейлера, ноябрь 2023 (docs/FACTS_TODO.md)
 
 
 def q(x: Decimal) -> Decimal:

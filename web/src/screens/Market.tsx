@@ -17,7 +17,7 @@ export type Meta = {
 
 export const useMeta = () => useQuery({ queryKey: ["meta"], queryFn: () => api<Meta>("/api/meta"), staleTime: Infinity });
 
-const STATUS_TONE: Record<string, "success" | "warning" | "danger"> = { "Подтверждено": "success", "Неточно": "warning", "Не подтверждено": "danger", "Опровергнут": "danger" };
+const STATUS_TONE: Record<string, "success" | "warning" | "danger"> = { "Подтверждено": "success", "Неточно": "warning", "Нет данных": "warning", "Опровергнут": "danger" };
 
 export default function Market() {
   const m = useMeta();
@@ -27,7 +27,7 @@ export default function Market() {
       {m.isError && <ErrorBox text={errorText(m.error)} onRetry={() => m.refetch()} />}
       {!m.data ? <Card><Loading rows={8} /></Card> : (
         <div className="grid gap-6 xl:grid-cols-12">
-          <Card className="xl:col-span-8" title="Факты" lead={`Данные на ${m.data.facts_as_of}. «Неточно» — есть только пересказ или диапазон; «Не подтверждено» — первоисточник не найден.`}>
+          <Card className="xl:col-span-8" title="Факты" lead={`Данные на ${m.data.facts_as_of}. «Неточно» — есть только пересказ или диапазон; «Нет данных» — показатель не публикуется. Факты без первоисточника на экран не выводятся.`}>
             <div className="hidden overflow-x-auto md:block" tabIndex={0}>
               <table className="data-table">
                 <caption className="sr-only">Факты рынка</caption>
@@ -65,7 +65,7 @@ export default function Market() {
             </Card>
             <Card title="Как читать статусы и бейджи">
               <dl className="flex flex-col gap-3 text-small">
-                <div><dt className="font-medium">Подтверждено · Неточно · Не подтверждено · Опровергнут</dt><dd className="text-ink2">Статус проверки в таблице фактов: первоисточник открыт; есть только пересказ или диапазон; источник не найден; тезис оказался неверным.</dd></div>
+                <div><dt className="font-medium">Подтверждено · Неточно · Нет данных · Опровергнут</dt><dd className="text-ink2">Статус проверки в таблице фактов: первоисточник открыт; есть только пересказ или диапазон; показатель не публикуется; тезис оказался неверным.</dd></div>
                 <div><dt className="font-medium">Факт</dt><dd className="text-ink2">Число из открытого источника с датой. Источник — в подсказке бейджа.</dd></div>
                 <div><dt className="font-medium">Гипотеза</dt><dd className="text-ink2">Допущение автора. Его можно двигать в симуляторе и модели; проверяется интервью и письмами о намерениях.</dd></div>
                 <div><dt className="font-medium">Факт и гипотеза</dt><dd className="text-ink2">Ориентир взят из факта, но перенесён на нашу схему с допущением (например, премия ЦФА к ключевой).</dd></div>
