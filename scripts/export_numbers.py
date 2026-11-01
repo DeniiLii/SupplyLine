@@ -127,7 +127,8 @@ def demo() -> dict:
     return {
         "simulator_default": {"eff_rate": q["price"]["eff_rate"], "r_total": q["price"]["r_total"],
                               "msp_rate": q["compare"]["msp_rate"],
-                              "over_msp_pp": (q["price"]["eff_rate"] - q["compare"]["msp_rate"]) * 100},
+                              "over_msp_pp": (q["price"]["eff_rate"] - q["compare"]["msp_rate"]) * 100,
+                              "components": {w["key"]: w["rate"] for w in q["waterfall"]}},
         "overview": {**{k: ov["kpi"][k] for k in ("duplicates_blocked", "invoices_visible", "outstanding",
                                                   "turnover_total", "overdue30_share", "off_balance_share")},
                      "gates": {g["key"]: {"value": g["value"], "ok": g["ok"]} for g in ov["gates"]}},
