@@ -14,3 +14,7 @@ web/dist/
 screenshots/*.json
 review/
 deliverables/
+db/sessions/
+*.webm
+*.mp4
+.env
